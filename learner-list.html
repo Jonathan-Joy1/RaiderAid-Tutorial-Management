@@ -2,8 +2,127 @@
 <html>
 <head>
     <title>Learner List</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="Visual_Layout.css">
+<style>
+body {
+   font-family: Helvetica, sans-serif;
+   background-color: hsl(236, 68%, 26%);
+   margin: 0;
+   padding: 0;
+}
+header {
+   background-color: #f1e31ce1;
+   color: #fff;
+   padding: 20px;
+   text-align: center;
+}
+nav ul {
+   list-style-type: none;
+   padding: 0;
+}
+nav ul li {
+   display: inline;
+   margin-right: 20px;
+}
+nav ul li a {
+   text-decoration: none;
+   color: #fff;
+}
+main {
+    display: flex;
+    justify-content: center;  
+    padding: 20px;
+}
+.content {
+   flex: 2; /* About 2/3 of the primary area of the content */
+}
+.sidebar {
+flex: 1; /* About 1/3 of the primary area of the content */
+background-color: #f9f9f9;
+padding: 20px;
+margin-left: 20px;
+max-height: 500px;
+overflow-y: auto;
+}
+section {
+    background-color: #fff;
+    min-height: 400px;
+    padding: 60px 20px 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.section-row {
+    display: flex;
+    justify-content: center; 
+    gap: 50px; 
+}
+
+.list-section, .add-section {
+    flex: 0 1 50%;
+    max-width: 500px;
+    min-width: 350px;
+}
+
+.add-section {
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 60px;
+}
+
+.add-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    padding: 5px;
+}
+
+.add-section form label {
+    display: block;
+    width: 200%;
+}
+
+.add-section input {
+    width: 80%;
+    max-width: 325px;
+    box-sizing: border-box;
+    margin: 0 auto;
+}
+
+.add-section button {
+    width: auto;
+    padding: 8px 20px;
+    align-self: center;
+    margin-top: 10px;
+}
+
+
+/* scroller list of students */
+.scroll-container {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 20px;
+    text-align: left;
+}
+
+.scroll-container ul {
+    margin: 0;
+    padding-left: 20px;
+}
+footer {
+    background-color: #000000;
+    color: #fff;
+    padding: 10px 20px;
+    text-align: center;
+}
+</style>
+
 </head>
+
 <body>
     <header>
         <h1>RaiderAid Reminder</h1>
@@ -20,13 +139,33 @@
         </nav>
     </header>
     <main>
-        <section>
-            <h2>Learner List</h2>
-            <p>Learner management content goes here.</p>
-        </section>
+        <div class="section-row">
+            <section class="add-section">
+                <h2>Add Learners</h2>
+                <form>
+                    <label>Student Email:<br> <input type="email" name="email"></label>
+                    <label>First Name:<br> <input type="text" name="first"></label>
+                    <label>Last Name:<br> <input type="text" name="last"></label>
+                    <button type="submit">Add</button>
+                </form>
+            </section>
+
+            <section class="list-section">
+                <h2>Learner List</h2>
+                <div class="scroll-container">
+                    <ul>
+                        <li>Learner A</li>
+                        <li>Learner B</li>
+                        <li>Learner C</li>
+                        <li>Learner D</li>
+                        <li>Learner E</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
     </main>
     <footer>
-        <p>&copy; 2026 Email Reminder. All rights reserved.</p>
+        <p>&copy; 2026 RaiderAid Reminder. All rights reserved.</p>
     </footer>
 </body>
 </html>
