@@ -29,16 +29,47 @@ nav ul li a {
    text-decoration: none;
    color: #fff;
 }
+
+av ul li a.active,
+nav ul li a.current {
+    background-color: #eee;
+    color: #000;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+nav ul li a:active {
+    background-color: #ccc;
+}
+
+/* loader overlay */
+#loader {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+#loader .spinner {
+    border: 4px solid #ccc;
+    border-top: 4px solid #333;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {to{transform:rotate(360deg);}}
 main {
     display: flex;
     justify-content: center;  
     padding: 20px;
 }
 .content {
-   flex: 2; /* About 2/3 of the primary area of the content */
+   flex: 2;
 }
 .sidebar {
-flex: 1; /* About 1/3 of the primary area of the content */
+flex: 1;
 background-color: #f9f9f9;
 padding: 20px;
 margin-left: 20px;
@@ -124,6 +155,7 @@ footer {
 </head>
 
 <body>
+    <div id="loader"><div class="spinner"></div></div>
     <header>
         <h1>RaiderAid Reminder</h1>
         <nav>
@@ -132,9 +164,10 @@ footer {
                 <li><a href="#"> </a></li>
                 <li><a href="signup-login.html">Sign-Up/Login</a></li>
                 <li><a href="#"> </a></li>
-                <li><a href="learner-list.html">Learner List</a></li>
+                <li><a href="learner-list.html" class="current">Learner List</a></li>
                 <li><a href="#"> </a></li>
                 <li><a href="sender.html">Sender</a></li>
+                <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
             </ul>
         </nav>
     </header>
@@ -164,6 +197,110 @@ footer {
             </section>
         </div>
     </main>
+<script>
+// script to store/display learners with edit/delete
+(function(){
+    function loadLearners(){
+        const ul = document.querySelector('.list-section .scroll-container ul');
+        ul.innerHTML = '';
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+        learners.forEach((l,index)=>{
+            const li = document.createElement('li');
+            li.textContent = l.first + ' ' + l.last + ' ('+l.email+')';
+
+            const edit = document.createElement('button');
+            edit.textContent = 'Edit';
+            edit.style.marginLeft='10px';
+            edit.addEventListener('click',()=>editLearner(index));
+
+            const del = document.createElement('button');
+            del.textContent = 'Remove';
+            del.style.marginLeft='5px';
+            del.addEventListener('click',()=>deleteLearner(index));
+
+            li.appendChild(edit);
+            li.appendChild(del);
+            ul.appendChild(li);
+        });
+    }
+    function editLearner(i){
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+        const l = learners[i];
+        const email = prompt('Email', l.email);
+        if(email === null) return;
+        const first = prompt('First name', l.first);
+        if(first === null) return;
+        const last = prompt('Last name', l.last);
+        if(last === null) return;
+        learners[i] = {email, first, last};
+        localStorage.setItem('learners', JSON.stringify(learners));
+        loadLearners();
+    }
+    function deleteLearner(i){
+        if(!confirm('Remove this learner?')) return;
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+        learners.splice(i,1);
+        localStorage.setItem('learners', JSON.stringify(learners));
+        loadLearners();
+    }
+
+    document.querySelector('.add-section form').addEventListener('submit',function(e){
+        e.preventDefault();
+        const email = this.elements['email'].value.trim();
+        const first = this.elements['first'].value.trim();
+        const last = this.elements['last'].value.trim();
+        if(email && first && last){
+            const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+            learners.push({email,first,last});
+            localStorage.setItem('learners', JSON.stringify(learners));
+            loadLearners();
+            this.reset();
+        }
+    });
+    loadLearners();
+})();
+
+// initialize firebase and protect page
+(function(){
+  // ensure SDK scripts are loaded on this page too
+  if(typeof firebase==='undefined'){
+    const s1=document.createElement('script');
+    s1.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+    const s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js';
+    document.head.appendChild(s1);
+    document.head.appendChild(s2);
+    s2.onload = initAuth;
+  } else initAuth();
+  function initAuth(){
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzpQdDjGyNr-Cu6VcvrcJPTELT-4D3Dtc",
+      authDomain: "raideraid-374c7.firebaseapp.com",
+      projectId: "raideraid-374c7",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth=firebase.auth();
+    auth.onAuthStateChanged(u=>{
+      if(!u) window.location='signup-login.html';
+    });
+  }
+})();
+
+// nav highlight script
+(function(){
+  const current = location.pathname.split('/').pop();
+  document.querySelectorAll('nav ul li a').forEach(a=>{
+    const href = a.getAttribute('href');
+    if(a.href === location.href || href === current){ a.classList.add('active'); }
+    a.addEventListener('click',()=>{
+      document.getElementById('loader').style.display='flex';
+    });
+  });
+  window.addEventListener('beforeunload',()=>{
+      document.getElementById('loader').style.display='flex';
+  });
+})();
+</script>
     <footer>
         <p>&copy; 2026 RaiderAid Reminder. All rights reserved.</p>
     </footer>
