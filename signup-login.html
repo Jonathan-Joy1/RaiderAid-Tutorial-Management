@@ -122,6 +122,54 @@ footer {
     cursor: pointer;
 }
 
+#auth-message {
+    margin-top: 18px;
+    padding: 10px;
+    border-radius: 4px;
+    display: none;
+    font-size: 0.95rem;
+    line-height: 1.35;
+}
+
+#auth-message.success {
+    background: #e7f7eb;
+    color: #1e6b32;
+}
+
+#auth-message.error {
+    background: #fde8e8;
+    color: #8b1f1f;
+}
+
+#resend-verification {
+    margin-top: 10px;
+    display: none;
+    width: 260px;
+    padding: 10px;
+}
+
+#logged-in-panel {
+    display: none;
+    margin: 0 auto;
+    max-width: 360px;
+    text-align: center;
+}
+
+#signout-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+#resend-verification-panel {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
 </style>
 </head>
 <body>
@@ -132,7 +180,7 @@ footer {
             <ul>
                 <li><a href="home.html">Home</a></li>
                 <li><a href="#"> </a></li>
-                <li><a href="signup-login.html" class="current">Sign-Up/Login</a></li>
+                <li><a href="signup-login.html" id="auth-nav-link" class="current">Sign-Up/Login</a></li>
                 <li><a href="#"> </a></li>
                 <li><a href="learner-list.html">Learner List</a></li>
                 <li><a href="#"> </a></li>
@@ -157,6 +205,7 @@ footer {
                         </div>
                         <button type="submit">Log In</button>
                     </form>
+                    <button id="resend-verification" type="button">Resend Verification Email</button>
                 </div>
 
                 <div class="auth-box signup-box">
@@ -182,6 +231,13 @@ footer {
                     </form>
                 </div>
             </div>
+            <div id="logged-in-panel" class="auth-box">
+                <h2>You Are Logged In</h2>
+                <p id="logged-in-email"></p>
+                <button id="resend-verification-panel" type="button" style="display:none;">Resend Verification Email</button>
+                <button id="signout-btn" type="button">Sign Out</button>
+            </div>
+            <div id="auth-message"></div>
         </section>
     </main>
 <script>
@@ -215,13 +271,83 @@ footer {
     messagingSenderId: "87161799131",
     appId: "1:87161799131:web:e2efe81532490595bfe7fe"
   };
-  firebase.initializeApp(firebaseConfig);
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
   const auth = firebase.auth();
+  let lastUnverifiedUser = null;
+  const authRow = document.querySelector('.auth-row');
+  const loggedInPanel = document.getElementById('logged-in-panel');
+  const loggedInEmail = document.getElementById('logged-in-email');
+  const authNavLink = document.getElementById('auth-nav-link');
+  const resendButton = document.getElementById('resend-verification');
+  const resendPanelButton = document.getElementById('resend-verification-panel');
 
-  auth.onAuthStateChanged(user=>{
-    if(user) {
-      window.location.href='learner-list.html';
+  function showAuthMessage(message, type){
+    const box = document.getElementById('auth-message');
+    box.textContent = message;
+    box.className = '';
+    if (type) box.classList.add(type);
+    box.style.display = 'block';
+  }
+
+  function showResendButton(show){
+    resendButton.style.display = show ? 'block' : 'none';
+  }
+
+  function showResendPanelButton(show){
+    resendPanelButton.style.display = show ? 'block' : 'none';
+  }
+
+  function showAuthForms(){
+    authRow.style.display = 'flex';
+    showResendButton(false);
+    showResendPanelButton(false);
+    loggedInPanel.style.display = 'none';
+    authNavLink.textContent = 'Sign-Up/Login';
+    authNavLink.setAttribute('href', 'signup-login.html');
+  }
+
+  function showSignedInPanel(user, verified){
+    authRow.style.display = 'none';
+    showResendButton(false);
+    showResendPanelButton(!verified);
+    loggedInPanel.style.display = 'block';
+    loggedInEmail.textContent = user.email ? ('Signed in as ' + user.email) : '';
+    if (verified) {
+      authNavLink.textContent = 'Sign Out';
+      authNavLink.setAttribute('href', '#');
+    } else {
+      authNavLink.textContent = 'Account';
+      authNavLink.setAttribute('href', 'signup-login.html');
     }
+  }
+
+  function formatAuthError(err){
+    if (!err) return 'Unknown error. Please try again.';
+    if (err.code) return err.code + ': ' + err.message;
+    return err.message || String(err);
+  }
+
+  async function sendVerificationEmail(user){
+    if (!user) throw new Error('No signed-in user found for verification email.');
+    await user.sendEmailVerification();
+  }
+
+  auth.onAuthStateChanged(async user=>{
+    if(!user){
+      showAuthForms();
+      return;
+    }
+    await user.reload();
+    if (user.emailVerified) {
+      showSignedInPanel(user, true);
+      showAuthMessage('Signed in. You can go to Learner List or Sender, or sign out here.', 'success');
+      return;
+    }
+    lastUnverifiedUser = user;
+    showSignedInPanel(user, false);
+    showAuthMessage('Email not verified yet. Use "Resend Verification Email", then check inbox/spam.', 'error');
   });
 
   document.getElementById('signup-form').addEventListener('submit', e=>{
@@ -229,17 +355,75 @@ footer {
     const email = e.target['signup-email'].value;
     const password = e.target['signup-password'].value;
     auth.createUserWithEmailAndPassword(email,password)
-      .then(()=>{ window.location='learner-list.html'; })
-      .catch(err=>alert(err.message));
+      .then(async cred=>{
+        lastUnverifiedUser = cred.user;
+        await sendVerificationEmail(cred.user);
+        showSignedInPanel(cred.user, false);
+        showAuthMessage('Account created. Verification email sent. Check inbox/spam.', 'success');
+        e.target.reset();
+      })
+      .catch(err=>showAuthMessage(formatAuthError(err), 'error'));
   });
 
-  document.getElementById('login-form').addEventListener('submit', e=>{
+  document.getElementById('login-form').addEventListener('submit', async e=>{
     e.preventDefault();
     const email = e.target['login-email'].value;
     const password = e.target['login-password'].value;
-    auth.signInWithEmailAndPassword(email,password)
-      .then(()=>{ window.location='learner-list.html'; })
-      .catch(err=>alert(err.message));
+    try {
+      const cred = await auth.signInWithEmailAndPassword(email,password);
+      await cred.user.reload();
+      if (!cred.user.emailVerified) {
+        lastUnverifiedUser = cred.user;
+        showSignedInPanel(cred.user, false);
+        showAuthMessage('Email not verified yet. Use "Resend Verification Email", then check inbox/spam.', 'error');
+        return;
+      }
+      showSignedInPanel(cred.user, true);
+      showAuthMessage('Signed in. You can go to Learner List or Sender, or sign out here.', 'success');
+    } catch (err) {
+      showAuthForms();
+      showResendButton(false);
+      showAuthMessage(formatAuthError(err), 'error');
+    }
+  });
+
+  async function resendVerificationEmail(){
+    try {
+      const user = auth.currentUser || lastUnverifiedUser;
+      if (!user) {
+        showAuthMessage('Log in first to resend verification email.', 'error');
+        return;
+      }
+      await sendVerificationEmail(user);
+      showAuthMessage('Verification email resent. Check inbox/spam.', 'success');
+    } catch (err) {
+      showAuthMessage(formatAuthError(err), 'error');
+    }
+  }
+
+  document.getElementById('resend-verification').addEventListener('click', async ()=>{
+    await resendVerificationEmail();
+  });
+
+  resendPanelButton.addEventListener('click', async ()=>{
+    await resendVerificationEmail();
+  });
+
+  async function doSignOut(){
+    await auth.signOut();
+    showAuthForms();
+    showAuthMessage('Signed out.', 'success');
+  }
+
+  document.getElementById('signout-btn').addEventListener('click', async ()=>{
+    await doSignOut();
+  });
+
+  authNavLink.addEventListener('click', async ev=>{
+    if(authNavLink.getAttribute('href') === '#'){
+      ev.preventDefault();
+      await doSignOut();
+    }
   });
 </script>
 </body>

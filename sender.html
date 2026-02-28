@@ -11,6 +11,7 @@ body {
    background-color: hsl(236, 68%, 26%);
    margin: 0;
    padding: 0;
+   display: none;
 }
 header {
    background-color: #f1e31ce1;
@@ -41,6 +42,25 @@ nav ul li a.current {
 nav ul li a:active {
     background-color: #ccc;
 }
+
+#loader {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+#loader .spinner {
+    border: 4px solid #ccc;
+    border-top: 4px solid #333;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {to{transform:rotate(360deg);}}
 main {
     display: flex;
     flex-direction: column;
@@ -84,11 +104,16 @@ section {
     text-align: left;
 }
 
+.location-part label {
+    display: block;
+}
+
 .location-part input {
     width: 100%;
     max-width: 400px;
     box-sizing: border-box;
     padding: 5px;
+    margin-bottom: 10px;
 }
 
 .button-container {
@@ -98,6 +123,12 @@ section {
 #send-btn {
     padding: 10px 20px;
     font-size: 1rem;
+}
+
+#send-status {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    text-align: center;
 }
 footer {
     background-color: #000000;
@@ -109,6 +140,7 @@ footer {
 </head>
 
 <body>
+    <div id="loader"><div class="spinner"></div></div>
     <header>
         <h1>RaiderAid Reminder</h1>
         <nav>
@@ -127,7 +159,7 @@ footer {
     <main>
         <section class="list-section">
             <div class="selection-part">
-                <h2>Select Students to Remind:</h2>
+                <h2>Select Student(s) to Remind:</h2>
                 <div class="scroll-container">
                     <ul>
                         <li><label><input type="checkbox"/> Learner A</label></li>
@@ -139,19 +171,84 @@ footer {
                 </div>
             </div>
             <div class="location-part">
-                <h3 style="text-align:center;">Enter Student Locations</h3>
+                <h3 style="text-align:center;">Enter the Location and Email to Send From:</h3>
                 <form id="location-form">
-                    <label>Location for selected students:<br>
+                    <label>Location for selected student(s):<br>
                         <input type="text" name="location" placeholder="e.g. Room 101">
+                    </label>
+                    <label>Teacher email:<br>
+                        <input type="email" name="teacher_email" placeholder="teacher@school.edu">
                     </label>
                 </form>
             </div>
             <div class="button-container">
                 <button id="send-btn">Send Reminder</button>
+                <div id="send-status"></div>
             </div>
         </section>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
+let authInstance;
+const EMAILJS_CONFIG = {
+    publicKey: "QTD4OCJRyBm4ObJFA",
+    serviceId: "service_0nga3ei",
+    templateId: "template_l6l82d6"
+};
+const APP_BASE_URL = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "");
+const CONFIRM_LINK_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+
+function isEmailJsConfigured() {
+    return EMAILJS_CONFIG.publicKey &&
+        EMAILJS_CONFIG.serviceId &&
+        EMAILJS_CONFIG.templateId &&
+        !EMAILJS_CONFIG.publicKey.includes("YOUR_") &&
+        !EMAILJS_CONFIG.serviceId.includes("YOUR_") &&
+        !EMAILJS_CONFIG.templateId.includes("YOUR_");
+}
+
+function buildConfirmLink(toEmail, senderEmail, location) {
+    const base = APP_BASE_URL.replace(/\/$/, "");
+    const payload = {
+        learner_email: toEmail,
+        sender_email: senderEmail || "raideraid-reminder",
+        location: location,
+        expires_at: Date.now() + CONFIRM_LINK_TTL_MS,
+        nonce: (window.crypto && window.crypto.randomUUID)
+            ? window.crypto.randomUUID()
+            : String(Date.now()) + Math.random().toString(16).slice(2)
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    return base + "/confirm-attendance.html?data=" + encodeURIComponent(encoded);
+}
+
+async function sendEmailViaEmailJS(toEmail, location, senderEmail) {
+    const confirmLink = buildConfirmLink(toEmail, senderEmail, location);
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            service_id: EMAILJS_CONFIG.serviceId,
+            template_id: EMAILJS_CONFIG.templateId,
+            user_id: EMAILJS_CONFIG.publicKey,
+            template_params: {
+                to_email: toEmail,
+                location: location,
+                sender_email: senderEmail || "raideraid-reminder",
+                confirm_link: confirmLink
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || ("EmailJS HTTP " + response.status));
+    }
+}
+
 function populateLearners(){
     const learners = JSON.parse(localStorage.getItem('learners')||'[]');
     const ul = document.querySelector('.scroll-container ul');
@@ -174,26 +271,44 @@ window.addEventListener('storage', e=>{
 });
 
 (function(){
-  if(typeof firebase==='undefined'){
-    const s1=document.createElement('script');
-    s1.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
-    const s2=document.createElement('script');
-    s2.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js';
-    document.head.appendChild(s1);
-    document.head.appendChild(s2);
-    s2.onload = initAuth;
-  } else initAuth();
-  function initAuth(){
-    const firebaseConfig = {
-      apiKey: "AIzaSyAzpQdDjGyNr-Cu6VcvrcJPTELT-4D3Dtc",
-      authDomain: "raideraid-374c7.firebaseapp.com",
-      projectId: "raideraid-374c7",
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAzpQdDjGyNr-Cu6VcvrcJPTELT-4D3Dtc",
+    authDomain: "raideraid-374c7.firebaseapp.com",
+    projectId: "raideraid-374c7",
+    storageBucket: "raideraid-374c7.firebasestorage.app",
+    messagingSenderId: "87161799131",
+    appId: "1:87161799131:web:e2efe81532490595bfe7fe"
+  };
+  if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-    firebase.auth().onAuthStateChanged(u=>{
-      if(!u) window.location='signup-login.html';
-    });
   }
+  authInstance = firebase.auth();
+
+  authInstance.onAuthStateChanged(async u=>{
+    if(!u){
+      window.location.replace('signup-login.html');
+      return;
+    }
+    await u.reload();
+    if(!u.emailVerified){
+      alert('Please verify your email before accessing this page.');
+      await authInstance.signOut();
+      window.location.replace('signup-login.html');
+      return;
+    }
+    const teacherEmailInput = document.querySelector('#location-form input[name=teacher_email]');
+    if (teacherEmailInput && u.email) {
+      teacherEmailInput.value = u.email;
+    }
+    const logoutLink = document.getElementById('logout-link');
+    logoutLink.style.display = 'inline';
+    logoutLink.addEventListener('click', async ev=>{
+      ev.preventDefault();
+      await authInstance.signOut();
+      window.location.replace('signup-login.html');
+    });
+    document.body.style.display = 'block';
+  });
 })();
 
 (function(){
@@ -211,15 +326,63 @@ window.addEventListener('storage', e=>{
 })();
 
 document.getElementById('send-btn').addEventListener('click', function(){
+    const sendBtn = document.getElementById('send-btn');
+    const status = document.getElementById('send-status');
     const learners = JSON.parse(localStorage.getItem('learners')||'[]');
     const checked = Array.from(document.querySelectorAll('.scroll-container input[type=checkbox]:checked'))
         .map(cb=>learners[cb.value]?.email)
         .filter(Boolean);
-    if(checked.length){
-        alert('Email(s) successfully sent)');
-    } else {
+    const location = document.querySelector('#location-form input[name=location]').value.trim();
+    const teacherEmail = document.querySelector('#location-form input[name=teacher_email]').value.trim();
+
+    if(!checked.length){
+        status.textContent = '';
         alert('Please select at least one student');
+        return;
     }
+    if(!location){
+        status.textContent = '';
+        alert('Please enter a location before sending.');
+        return;
+    }
+    if(!teacherEmail){
+        status.textContent = '';
+        alert('Please enter the teacher response email.');
+        return;
+    }
+    if(!isEmailJsConfigured()){
+        status.textContent = '';
+        alert('EmailJS is not configured yet. Update EMAILJS_CONFIG in sender.html.');
+        return;
+    }
+
+    sendBtn.disabled = true;
+    status.textContent = 'Sending...';
+    const senderEmail = teacherEmail;
+
+    Promise.allSettled(
+        checked.map(email => sendEmailViaEmailJS(email, location, senderEmail))
+    )
+        .then(results=>{
+            const failed = results
+                .map((result, index) => ({result, recipient: checked[index]}))
+                .filter(entry => entry.result.status === 'rejected');
+            const sent = checked.length - failed.length;
+            if (failed.length) {
+                const failedList = failed.map(f => f.recipient).join(', ');
+                status.textContent = 'Sent ' + sent + ' of ' + checked.length + '. Failed: ' + failedList;
+            } else {
+                status.textContent = 'Sent ' + sent + ' reminder email(s).';
+            }
+            alert(status.textContent);
+        })
+        .catch(err=>{
+            status.textContent = 'Send failed: ' + (err && err.message ? err.message : 'Unknown error');
+            alert(status.textContent);
+        })
+        .finally(()=>{
+            sendBtn.disabled = false;
+        });
 });
 </script>
     </main>

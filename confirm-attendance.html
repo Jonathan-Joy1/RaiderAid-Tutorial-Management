@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Attendance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Helvetica, sans-serif;
+            background: hsl(236, 68%, 26%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .card {
+            width: 100%;
+            max-width: 520px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        h1 {
+            margin-top: 0;
+        }
+        .meta {
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        #confirm-btn {
+            background: #198754;
+            color: #fff;
+        }
+        #decline-btn {
+            background: #b02a37;
+            color: #fff;
+        }
+        #status {
+            margin-top: 14px;
+            min-height: 22px;
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1>Attendance Confirmation</h1>
+        <div class="meta">
+            <div><strong>Learner:</strong> <span id="learner-email">-</span></div>
+            <div><strong>Location:</strong> <span id="location-text">-</span></div>
+        </div>
+        <p>Please confirm if you can attend this tutorial location.</p>
+        <div class="actions">
+            <button id="confirm-btn" type="button">Confirm I Will Attend</button>
+            <button id="decline-btn" type="button">I Cannot Attend</button>
+        </div>
+        <div id="status"></div>
+    </main>
+
+    <script>
+        const EMAILJS_RESPONSE_CONFIG = {
+            publicKey: "QTD4OCJRyBm4ObJFA",
+            serviceId: "service_0nga3ei",
+            responseTemplateId: "template_iy199f4"
+        };
+
+        function qs(name) {
+            return new URLSearchParams(window.location.search).get(name) || "";
+        }
+
+        function decodePayload(encoded) {
+            if (!encoded) return null;
+            try {
+                const json = decodeURIComponent(escape(atob(encoded)));
+                return JSON.parse(json);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function validEmail(value) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || "");
+        }
+
+        const encodedPayload = qs("data");
+        const payload = decodePayload(encodedPayload);
+        const learnerEmail = payload && payload.learner_email ? String(payload.learner_email).trim() : "";
+        const senderEmail = payload && payload.sender_email ? String(payload.sender_email).trim() : "";
+        const locationText = payload && payload.location ? String(payload.location).trim() : "";
+        const expiresAt = payload && Number(payload.expires_at);
+        const nonce = payload && payload.nonce ? String(payload.nonce) : "";
+        const nonceStorageKey = nonce ? ("attendance_response_sent_" + nonce) : "";
+
+        document.getElementById("learner-email").textContent = learnerEmail || "-";
+        document.getElementById("location-text").textContent = locationText || "-";
+
+        function setStatus(msg, isError) {
+            const status = document.getElementById("status");
+            status.textContent = msg;
+            status.style.color = isError ? "#b02a37" : "#198754";
+        }
+
+        function isConfigured() {
+            return EMAILJS_RESPONSE_CONFIG.publicKey &&
+                EMAILJS_RESPONSE_CONFIG.serviceId &&
+                EMAILJS_RESPONSE_CONFIG.responseTemplateId &&
+                !EMAILJS_RESPONSE_CONFIG.responseTemplateId.includes("YOUR_");
+        }
+
+        function disableActionButtons() {
+            document.getElementById("confirm-btn").disabled = true;
+            document.getElementById("decline-btn").disabled = true;
+        }
+
+        function validateLink() {
+            if (!payload) {
+                setStatus("Invalid confirmation link.", true);
+                disableActionButtons();
+                return false;
+            }
+            if (!validEmail(learnerEmail) || !validEmail(senderEmail) || !locationText) {
+                setStatus("Invalid confirmation details.", true);
+                disableActionButtons();
+                return false;
+            }
+            if (!expiresAt || Number.isNaN(expiresAt) || Date.now() > expiresAt) {
+                setStatus("This confirmation link has expired. Request a new reminder email.", true);
+                disableActionButtons();
+                return false;
+            }
+            if (nonceStorageKey && localStorage.getItem(nonceStorageKey) === "1") {
+                setStatus("This response was already submitted from this device.", true);
+                disableActionButtons();
+                return false;
+            }
+            return true;
+        }
+
+        async function sendResponse(statusValue) {
+            if (!validateLink()) {
+                return;
+            }
+            if (!isConfigured()) {
+                setStatus("Response email template is not configured yet.", true);
+                return;
+            }
+
+            const btnConfirm = document.getElementById("confirm-btn");
+            const btnDecline = document.getElementById("decline-btn");
+            btnConfirm.disabled = true;
+            btnDecline.disabled = true;
+            setStatus("Sending response...", false);
+
+            try {
+                const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        service_id: EMAILJS_RESPONSE_CONFIG.serviceId,
+                        template_id: EMAILJS_RESPONSE_CONFIG.responseTemplateId,
+                        user_id: EMAILJS_RESPONSE_CONFIG.publicKey,
+                        template_params: {
+                            to_email: senderEmail,
+                            learner_email: learnerEmail,
+                            location: locationText,
+                            response_status: statusValue,
+                            response_time: new Date().toLocaleString()
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+                if (nonceStorageKey) {
+                    localStorage.setItem(nonceStorageKey, "1");
+                }
+                setStatus("Thank you. Your response has been sent.", false);
+                disableActionButtons();
+            } catch (err) {
+                setStatus("Failed to send response: " + (err.message || "Unknown error"), true);
+            } finally {
+                if (nonceStorageKey && localStorage.getItem(nonceStorageKey) === "1") {
+                    disableActionButtons();
+                } else {
+                    btnConfirm.disabled = false;
+                    btnDecline.disabled = false;
+                }
+            }
+        }
+
+        validateLink();
+
+        document.getElementById("confirm-btn").addEventListener("click", function () {
+            sendResponse("Confirmed attendance");
+        });
+
+        document.getElementById("decline-btn").addEventListener("click", function () {
+            sendResponse("Cannot attend");
+        });
+    </script>
+</body>
+</html>
