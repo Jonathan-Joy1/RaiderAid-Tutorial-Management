@@ -189,6 +189,7 @@ footer {
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script>
 let authInstance;
 const EMAILJS_CONFIG = {
@@ -271,17 +272,7 @@ window.addEventListener('storage', e=>{
 });
 
 (function(){
-  const firebaseConfig = {
-    apiKey: "AIzaSyAzpQdDjGyNr-Cu6VcvrcJPTELT-4D3Dtc",
-    authDomain: "raideraid-374c7.firebaseapp.com",
-    projectId: "raideraid-374c7",
-    storageBucket: "raideraid-374c7.firebasestorage.app",
-    messagingSenderId: "87161799131",
-    appId: "1:87161799131:web:e2efe81532490595bfe7fe"
-  };
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+  initRaiderAidFirebase();
   authInstance = firebase.auth();
 
   authInstance.onAuthStateChanged(async u=>{

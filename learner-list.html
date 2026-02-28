@@ -200,6 +200,7 @@ footer {
     </main>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script>
 // script to store/display learners with edit/delete
 (function(){
@@ -265,14 +266,7 @@ footer {
 
 // initialize firebase and protect page
 (function(){
-  const firebaseConfig = {
-    apiKey: "AIzaSyAzpQdDjGyNr-Cu6VcvrcJPTELT-4D3Dtc",
-    authDomain: "raideraid-374c7.firebaseapp.com",
-    projectId: "raideraid-374c7",
-  };
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+  initRaiderAidFirebase();
   const auth = firebase.auth();
   auth.onAuthStateChanged(async u=>{
     if(!u){
