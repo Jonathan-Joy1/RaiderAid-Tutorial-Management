@@ -232,7 +232,7 @@ footer {
                 </div>
             </div>
             <div id="logged-in-panel" class="auth-box">
-                <h2>You Are Logged In</h2>
+                <h2>Account</h2>
                 <p id="logged-in-email"></p>
                 <button id="resend-verification-panel" type="button" style="display:none;">Resend Verification Email</button>
                 <button id="signout-btn" type="button">Sign Out</button>
@@ -342,12 +342,12 @@ footer {
     await user.reload();
     if (user.emailVerified) {
       showSignedInPanel(user, true);
-      showAuthMessage('Signed in. You can go to Learner List or Sender, or sign out here.', 'success');
+      showAuthMessage('You are signed in. Use Learner List or Sender, or sign out here.', 'success');
       return;
     }
     lastUnverifiedUser = user;
     showSignedInPanel(user, false);
-    showAuthMessage('Email not verified yet. Use "Resend Verification Email", then check inbox/spam.', 'error');
+    showAuthMessage('Your email is not verified yet. Click "Resend Verification Email" and check inbox/spam.', 'error');
   });
 
   document.getElementById('signup-form').addEventListener('submit', e=>{
@@ -375,11 +375,11 @@ footer {
       if (!cred.user.emailVerified) {
         lastUnverifiedUser = cred.user;
         showSignedInPanel(cred.user, false);
-        showAuthMessage('Email not verified yet. Use "Resend Verification Email", then check inbox/spam.', 'error');
+        showAuthMessage('Your email is not verified yet. Click "Resend Verification Email" and check inbox/spam.', 'error');
         return;
       }
       showSignedInPanel(cred.user, true);
-      showAuthMessage('Signed in. You can go to Learner List or Sender, or sign out here.', 'success');
+      showAuthMessage('You are signed in. Use Learner List or Sender, or sign out here.', 'success');
     } catch (err) {
       showAuthForms();
       showResendButton(false);
