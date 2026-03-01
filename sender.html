@@ -116,6 +116,16 @@ section {
     margin-bottom: 10px;
 }
 
+.location-part textarea {
+    width: 100%;
+    max-width: 400px;
+    box-sizing: border-box;
+    padding: 5px;
+    margin-bottom: 10px;
+    min-height: 88px;
+    resize: vertical;
+}
+
 .button-container {
     margin-top: 20px;
 }
@@ -177,7 +187,13 @@ footer {
                         <input type="text" name="location" placeholder="e.g. Room 101">
                     </label>
                     <label>Teacher email:<br>
-                        <input type="email" name="teacher_email" placeholder="teacher@school.edu">
+                        <input type="email" name="teacher_email" placeholder="teacher@sunnyvaleisd.net">
+                    </label>
+                    <label>Teacher name (shown to learners):<br>
+                        <input type="text" name="teacher_name" placeholder="e.g. Ms. Johnson">
+                    </label>
+                    <label>Description (optional):<br>
+                        <textarea name="description" placeholder="Describe the RaiderAid activity for learners (club, tutorial, etc.)"></textarea>
                     </label>
                 </form>
             </div>
@@ -209,12 +225,15 @@ function isEmailJsConfigured() {
         !EMAILJS_CONFIG.templateId.includes("YOUR_");
 }
 
-function buildConfirmLink(toEmail, senderEmail, location) {
+function buildConfirmLink(toEmail, learnerName, senderEmail, senderName, location, description) {
     const base = APP_BASE_URL.replace(/\/$/, "");
     const payload = {
         learner_email: toEmail,
+        learner_name: learnerName || "",
         sender_email: senderEmail || "raideraid-reminder",
+        sender_name: senderName || "Your teacher",
         location: location,
+        description: description || "",
         expires_at: Date.now() + CONFIRM_LINK_TTL_MS,
         nonce: (window.crypto && window.crypto.randomUUID)
             ? window.crypto.randomUUID()
@@ -224,8 +243,8 @@ function buildConfirmLink(toEmail, senderEmail, location) {
     return base + "/confirm-attendance.html?data=" + encodeURIComponent(encoded);
 }
 
-async function sendEmailViaEmailJS(toEmail, location, senderEmail) {
-    const confirmLink = buildConfirmLink(toEmail, senderEmail, location);
+async function sendEmailViaEmailJS(toEmail, learnerName, location, senderEmail, senderName, description) {
+    const confirmLink = buildConfirmLink(toEmail, learnerName, senderEmail, senderName, location, description);
     const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
         method: "POST",
         headers: {
@@ -237,8 +256,11 @@ async function sendEmailViaEmailJS(toEmail, location, senderEmail) {
             user_id: EMAILJS_CONFIG.publicKey,
             template_params: {
                 to_email: toEmail,
+                learner_name: learnerName || "",
                 location: location,
+                description: description || "",
                 sender_email: senderEmail || "raideraid-reminder",
+                sender_name: senderName || "Your teacher",
                 confirm_link: confirmLink
             }
         })
@@ -266,6 +288,19 @@ function populateLearners(){
         ul.appendChild(li);
     });
 }
+
+function deriveSenderName(nameValue, emailValue) {
+    const cleanName = (nameValue || "").trim();
+    if (cleanName) return cleanName;
+
+    const localPart = String(emailValue || "").split("@")[0].trim();
+    if (!localPart) return "Your teacher";
+
+    return localPart
+        .replace(/[._-]+/g, " ")
+        .replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+}
+
 populateLearners();
 window.addEventListener('storage', e=>{
     if(e.key==='learners') populateLearners();
@@ -290,6 +325,10 @@ window.addEventListener('storage', e=>{
     const teacherEmailInput = document.querySelector('#location-form input[name=teacher_email]');
     if (teacherEmailInput && u.email) {
       teacherEmailInput.value = u.email;
+    }
+    const teacherNameInput = document.querySelector('#location-form input[name=teacher_name]');
+    if (teacherNameInput && u.displayName) {
+      teacherNameInput.value = u.displayName;
     }
     const logoutLink = document.getElementById('logout-link');
     logoutLink.style.display = 'inline';
@@ -320,13 +359,25 @@ document.getElementById('send-btn').addEventListener('click', function(){
     const sendBtn = document.getElementById('send-btn');
     const status = document.getElementById('send-status');
     const learners = JSON.parse(localStorage.getItem('learners')||'[]');
-    const checked = Array.from(document.querySelectorAll('.scroll-container input[type=checkbox]:checked'))
-        .map(cb=>learners[cb.value]?.email)
+    const selectedLearners = Array.from(document.querySelectorAll('.scroll-container input[type=checkbox]:checked'))
+        .map(function (cb) {
+            const learner = learners[cb.value];
+            if (!learner || !learner.email) return null;
+            const first = (learner.first || "").trim();
+            const last = (learner.last || "").trim();
+            const fullName = (first + " " + last).trim();
+            return {
+                email: String(learner.email).trim(),
+                name: fullName || String(learner.email).trim()
+            };
+        })
         .filter(Boolean);
     const location = document.querySelector('#location-form input[name=location]').value.trim();
     const teacherEmail = document.querySelector('#location-form input[name=teacher_email]').value.trim();
+    const teacherName = document.querySelector('#location-form input[name=teacher_name]').value.trim();
+    const description = document.querySelector('#location-form textarea[name=description]').value.trim();
 
-    if(!checked.length){
+    if(!selectedLearners.length){
         status.textContent = '';
         alert('Please select at least one student');
         return;
@@ -350,18 +401,21 @@ document.getElementById('send-btn').addEventListener('click', function(){
     sendBtn.disabled = true;
     status.textContent = 'Sending...';
     const senderEmail = teacherEmail;
+    const senderName = deriveSenderName(teacherName, senderEmail);
 
     Promise.allSettled(
-        checked.map(email => sendEmailViaEmailJS(email, location, senderEmail))
+        selectedLearners.map(function (learner) {
+            return sendEmailViaEmailJS(learner.email, learner.name, location, senderEmail, senderName, description);
+        })
     )
         .then(results=>{
             const failed = results
-                .map((result, index) => ({result, recipient: checked[index]}))
+                .map((result, index) => ({result, recipient: selectedLearners[index] && selectedLearners[index].email}))
                 .filter(entry => entry.result.status === 'rejected');
-            const sent = checked.length - failed.length;
+            const sent = selectedLearners.length - failed.length;
             if (failed.length) {
                 const failedList = failed.map(f => f.recipient).join(', ');
-                status.textContent = 'Sent ' + sent + ' of ' + checked.length + '. Failed: ' + failedList;
+                status.textContent = 'Sent ' + sent + ' of ' + selectedLearners.length + '. Failed: ' + failedList;
             } else {
                 status.textContent = 'Sent ' + sent + ' reminder email(s).';
             }

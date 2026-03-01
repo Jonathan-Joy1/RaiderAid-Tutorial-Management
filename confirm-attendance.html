@@ -61,7 +61,9 @@
         <h1>Attendance Confirmation</h1>
         <div class="meta">
             <div><strong>Learner:</strong> <span id="learner-email">-</span></div>
+            <div><strong>Teacher:</strong> <span id="sender-name">-</span></div>
             <div><strong>Location:</strong> <span id="location-text">-</span></div>
+            <div><strong>Description:</strong> <span id="description-text">-</span></div>
         </div>
         <p>Please confirm if you can attend this tutorial location.</p>
         <div class="actions">
@@ -99,14 +101,19 @@
         const encodedPayload = qs("data");
         const payload = decodePayload(encodedPayload);
         const learnerEmail = payload && payload.learner_email ? String(payload.learner_email).trim() : "";
+        const learnerName = payload && payload.learner_name ? String(payload.learner_name).trim() : "";
         const senderEmail = payload && payload.sender_email ? String(payload.sender_email).trim() : "";
+        const senderName = payload && payload.sender_name ? String(payload.sender_name).trim() : "";
         const locationText = payload && payload.location ? String(payload.location).trim() : "";
+        const descriptionText = payload && payload.description ? String(payload.description).trim() : "";
         const expiresAt = payload && Number(payload.expires_at);
         const nonce = payload && payload.nonce ? String(payload.nonce) : "";
         const nonceStorageKey = nonce ? ("attendance_response_sent_" + nonce) : "";
 
-        document.getElementById("learner-email").textContent = learnerEmail || "-";
+        document.getElementById("learner-email").textContent = learnerName || learnerEmail || "-";
+        document.getElementById("sender-name").textContent = senderName || "-";
         document.getElementById("location-text").textContent = locationText || "-";
+        document.getElementById("description-text").textContent = descriptionText || "-";
 
         function setStatus(msg, isError) {
             const status = document.getElementById("status");
@@ -177,8 +184,11 @@
                         user_id: EMAILJS_RESPONSE_CONFIG.publicKey,
                         template_params: {
                             to_email: senderEmail,
+                            sender_name: senderName,
+                            learner_name: learnerName || learnerEmail,
                             learner_email: learnerEmail,
                             location: locationText,
+                            description: descriptionText,
                             response_status: statusValue,
                             response_time: new Date().toLocaleString()
                         }
