@@ -3,6 +3,7 @@ const BASE_URL = self.registration.scope;
 const HOME_URL = new URL("home.html", BASE_URL).toString();
 const APP_SHELL = [
   "",
+  "index.html",
   "home.html",
   "signup-login.html",
   "learner-list.html",

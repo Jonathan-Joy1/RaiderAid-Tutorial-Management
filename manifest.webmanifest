@@ -1,9 +1,9 @@
 {
   "name": "RaiderAid Reminder",
   "short_name": "RaiderAid",
-  "id": "./home.html",
+  "id": "./",
   "description": "Tutorial management and learner reminder app.",
-  "start_url": "./home.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#1a2470",
