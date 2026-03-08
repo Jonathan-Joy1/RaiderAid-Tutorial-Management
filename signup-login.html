@@ -385,6 +385,15 @@ footer {
     return err.message || String(err);
   }
 
+  function normalizeEmail(value){
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function isAllowedSignupDomain(email){
+    const normalized = normalizeEmail(email);
+    return normalized.endsWith('@sunnyvaleisd.net') || normalized.endsWith('@sunnyvaleisd.com');
+  }
+
   async function sendVerificationEmail(user){
     if (!user) throw new Error('No signed-in user found for verification email.');
     await user.sendEmailVerification();
@@ -409,8 +418,12 @@ footer {
 
   document.getElementById('signup-form').addEventListener('submit', e=>{
     e.preventDefault();
-    const email = e.target['signup-email'].value;
+    const email = normalizeEmail(e.target['signup-email'].value);
     const password = e.target['signup-password'].value;
+    if (!isAllowedSignupDomain(email)) {
+      showAuthMessage('Sign-up requires a @sunnyvaleisd.net or @sunnyvaleisd.com email address.', 'error');
+      return;
+    }
     auth.createUserWithEmailAndPassword(email,password)
       .then(async cred=>{
         lastUnverifiedUser = cred.user;
@@ -424,8 +437,12 @@ footer {
 
   document.getElementById('login-form').addEventListener('submit', async e=>{
     e.preventDefault();
-    const email = e.target['login-email'].value;
+    const email = normalizeEmail(e.target['login-email'].value);
     const password = e.target['login-password'].value;
+    if (!isAllowedSignupDomain(email)) {
+      showAuthMessage('Log in requires a @sunnyvaleisd.net or @sunnyvaleisd.com email address.', 'error');
+      return;
+    }
     try {
       const cred = await auth.signInWithEmailAndPassword(email,password);
       if (!cred.user.emailVerified) {
