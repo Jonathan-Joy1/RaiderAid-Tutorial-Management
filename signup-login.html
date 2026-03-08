@@ -274,10 +274,11 @@ footer {
     </main>
 <script>
 (function(){
-  const current = location.pathname.split('/').pop();
-  document.querySelectorAll('nav ul li a').forEach(a=>{
-    const href = a.getAttribute('href');
-    if(a.href === location.href || href === current){ a.classList.add('active'); }
+  const current = location.pathname.split('/').pop() || 'home.html';
+  const links = Array.from(document.querySelectorAll('nav ul li a'));
+  links.forEach(a=>{
+    a.classList.remove('active');
+    if(a.getAttribute('href') === current){ a.classList.add('active'); }
     a.addEventListener('click',()=>{
       document.getElementById('loader').style.display='flex';
     });
@@ -343,6 +344,7 @@ footer {
     loggedInPanel.style.display = 'none';
     authNavLink.textContent = 'Sign-Up/Login';
     authNavLink.setAttribute('href', 'signup-login.html');
+    authNavLink.style.fontWeight = '400';
     setCachedNavState(false);
   }
 
@@ -356,6 +358,7 @@ footer {
     loggedInEmail.textContent = user.email ? ('Signed in as ' + user.email) : '';
     authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
+    authNavLink.style.fontWeight = '700';
     setCachedNavState(true);
   }
 

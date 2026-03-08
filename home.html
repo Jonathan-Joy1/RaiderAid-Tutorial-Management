@@ -124,13 +124,11 @@ footer {
 <script>
 
 (function(){
-  const current = location.pathname.split('/').pop();
-  document.querySelectorAll('nav ul li a').forEach(a=>{
-    const href = a.getAttribute('href');
-    if(a.href === location.href || href === current){
-      a.classList.add('active');
-    }
-  });
+  const current = location.pathname.split('/').pop() || 'home.html';
+  const links = Array.from(document.querySelectorAll('nav ul li a'));
+  links.forEach(a => a.classList.remove('active'));
+  const active = links.find(a => a.getAttribute('href') === current);
+  if (active) active.classList.add('active');
 })();
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -161,8 +159,7 @@ footer {
   function applyLoggedOutNav() {
     authLink.textContent = "Sign-Up/Login";
     authLink.setAttribute("href", "signup-login.html");
-    learnerLink.style.display = "inline";
-    senderLink.style.display = "inline";
+    authLink.style.fontWeight = "400";
     isVerifiedUser = false;
     setCachedNavState(false);
   }
@@ -170,8 +167,7 @@ footer {
   function applyLoggedInNav() {
     authLink.textContent = "Account";
     authLink.setAttribute("href", "signup-login.html");
-    learnerLink.style.display = "inline";
-    senderLink.style.display = "inline";
+    authLink.style.fontWeight = "700";
     isVerifiedUser = true;
     setCachedNavState(true);
   }
