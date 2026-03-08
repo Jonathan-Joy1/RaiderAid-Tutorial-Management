@@ -134,6 +134,12 @@ section {
     margin-bottom: 20px;
 }
 
+.list-empty-hint {
+    margin-top: 8px;
+    color: #555;
+    font-style: italic;
+}
+
 .location-part {
     margin: 20px 0;
     text-align: left;
@@ -207,6 +213,7 @@ footer {
         <section class="list-section">
             <div class="selection-part">
                 <h2>Select Student(s) to Remind:</h2>
+                <div id="sender-empty-hint" class="list-empty-hint" style="display:none;">No students added yet.</div>
                 <div class="scroll-container">
                     <ul>
                         <li class="empty-state">No students added yet.</li>
@@ -308,14 +315,17 @@ async function sendEmailViaEmailJS(toEmail, learnerName, location, senderEmail, 
 function populateLearners(){
     const learners = JSON.parse(localStorage.getItem('learners')||'[]');
     const ul = document.querySelector('.scroll-container ul');
+    const emptyHint = document.getElementById('sender-empty-hint');
     ul.innerHTML = '';
     if (!learners.length) {
+        emptyHint.style.display = 'block';
         const empty = document.createElement('li');
         empty.className = 'empty-state';
         empty.textContent = 'No students added yet.';
         ul.appendChild(empty);
         return;
     }
+    emptyHint.style.display = 'none';
     learners.forEach((l,index)=>{
         const li = document.createElement('li');
         const chk = document.createElement('input');

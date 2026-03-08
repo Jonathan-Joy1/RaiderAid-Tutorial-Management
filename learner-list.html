@@ -180,6 +180,12 @@ section {
     list-style: none;
     margin-left: 0;
 }
+
+.list-empty-hint {
+    margin-top: 8px;
+    color: #555;
+    font-style: italic;
+}
 footer {
     background-color: #000000;
     color: #fff;
@@ -217,6 +223,7 @@ footer {
 
             <section class="list-section">
                 <h2>Learner List</h2>
+                <div id="learner-empty-hint" class="list-empty-hint" style="display:none;">No students added yet.</div>
                 <div class="scroll-container">
                     <ul>
                         <li class="empty-state">No students added yet.</li>
@@ -233,15 +240,18 @@ footer {
 (function(){
     function loadLearners(){
         const ul = document.querySelector('.list-section .scroll-container ul');
+        const emptyHint = document.getElementById('learner-empty-hint');
         ul.innerHTML = '';
         const learners = JSON.parse(localStorage.getItem('learners')||'[]');
         if (!learners.length) {
+            emptyHint.style.display = 'block';
             const empty = document.createElement('li');
             empty.className = 'empty-state';
             empty.textContent = 'No students added yet.';
             ul.appendChild(empty);
             return;
         }
+        emptyHint.style.display = 'none';
         learners.forEach((l,index)=>{
             const li = document.createElement('li');
             li.textContent = l.first + ' ' + l.last + ' ('+l.email+')';
