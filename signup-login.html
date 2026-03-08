@@ -239,7 +239,7 @@ footer {
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
-                <li><a href="signup-login.html" id="auth-nav-link" class="current">Sign-Up/Login</a></li>
+                <li><a href="signup-login.html" id="auth-nav-link" class="current">Account</a></li>
                 <li><a href="learner-list.html">Learner List</a></li>
                 <li><a href="sender.html">Sender</a></li>
             </ul>
@@ -361,8 +361,7 @@ footer {
   }
 
   function applyCachedNavState(){
-    const cached = localStorage.getItem(NAV_AUTH_STATE_KEY);
-    authNavLink.textContent = cached === 'account' ? 'Account' : 'Sign-Up/Login';
+    authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
   }
 
@@ -373,7 +372,7 @@ footer {
     showResendButton(false);
     showResendPanelButton(false);
     loggedInPanel.style.display = 'none';
-    authNavLink.textContent = 'Sign-Up/Login';
+    authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
     setCachedNavState(false);
   }
