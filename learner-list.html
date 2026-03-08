@@ -173,6 +173,13 @@ section {
     margin: 0;
     padding-left: 20px;
 }
+
+.empty-state {
+    color: #555;
+    font-style: italic;
+    list-style: none;
+    margin-left: 0;
+}
 footer {
     background-color: #000000;
     color: #fff;
@@ -232,6 +239,13 @@ footer {
         const ul = document.querySelector('.list-section .scroll-container ul');
         ul.innerHTML = '';
         const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+        if (!learners.length) {
+            const empty = document.createElement('li');
+            empty.className = 'empty-state';
+            empty.textContent = 'No students added yet.';
+            ul.appendChild(empty);
+            return;
+        }
         learners.forEach((l,index)=>{
             const li = document.createElement('li');
             li.textContent = l.first + ' ' + l.last + ' ('+l.email+')';
