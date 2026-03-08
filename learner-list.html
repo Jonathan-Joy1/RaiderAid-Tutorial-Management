@@ -29,10 +29,10 @@ nav ul {
    display: flex;
    flex-wrap: wrap;
    justify-content: center;
-   gap: 12px;
+   gap: 8px;
 }
 nav ul li {
-   display: block;
+   display: flex;
 }
 nav ul li a {
    text-decoration: none;
@@ -41,8 +41,7 @@ nav ul li a {
    align-items: center;
    justify-content: center;
    min-height: 44px;
-   min-width: 132px;
-   padding: 8px 12px;
+   padding: 8px 10px;
    box-sizing: border-box;
 }
 
@@ -180,7 +179,7 @@ footer {
                 <li><a href="signup-login.html">Sign-Up/Login</a></li>
                 <li><a href="learner-list.html" class="current">Learner List</a></li>
                 <li><a href="sender.html">Sender</a></li>
-                <li><a href="#" id="logout-link" style="visibility:hidden;pointer-events:none;">Logout</a></li>
+                <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
             </ul>
         </nav>
     </header>
@@ -293,8 +292,7 @@ footer {
       return;
     }
     const logoutLink = document.getElementById('logout-link');
-    logoutLink.style.visibility = 'visible';
-    logoutLink.style.pointerEvents = 'auto';
+    logoutLink.style.display = 'inline-flex';
     logoutLink.addEventListener('click', async ev=>{
       ev.preventDefault();
       await auth.signOut();

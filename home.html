@@ -27,10 +27,10 @@ nav ul {
    display: flex;
    flex-wrap: wrap;
    justify-content: center;
-   gap: 12px;
+   gap: 8px;
 }
 nav ul li {
-   display: block;
+   display: flex;
 }
 nav ul li a {
    text-decoration: none;
@@ -39,8 +39,7 @@ nav ul li a {
    align-items: center;
    justify-content: center;
    min-height: 44px;
-   min-width: 132px;
-   padding: 8px 12px;
+   padding: 8px 10px;
    box-sizing: border-box;
 }
 
@@ -88,7 +87,7 @@ footer {
           <li><a href="signup-login.html" id="auth-link">Sign-Up/Login</a></li>
           <li><a href="learner-list.html" id="learner-link">Learner List</a></li>
           <li><a href="sender.html" id="sender-link">Sender</a></li>
-          <li><a href="#" id="logout-link" style="visibility:hidden;pointer-events:none;">Logout</a></li>
+          <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
        </ul>
      </nav>
    </header>
@@ -143,8 +142,7 @@ footer {
     authLink.setAttribute("href", "signup-login.html");
     learnerLink.style.display = "inline";
     senderLink.style.display = "inline";
-    logoutLink.style.visibility = "hidden";
-    logoutLink.style.pointerEvents = "none";
+    logoutLink.style.display = "none";
     isVerifiedUser = false;
   }
 
@@ -154,8 +152,7 @@ footer {
     authLink.setAttribute("href", "signup-login.html");
     learnerLink.style.display = "inline";
     senderLink.style.display = "inline";
-    logoutLink.style.visibility = "visible";
-    logoutLink.style.pointerEvents = "auto";
+    logoutLink.style.display = "inline-flex";
     isVerifiedUser = true;
   }
 
