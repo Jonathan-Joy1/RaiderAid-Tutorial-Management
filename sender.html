@@ -172,10 +172,9 @@ footer {
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
-                <li><a href="signup-login.html">Sign-Up/Login</a></li>
+                <li><a href="signup-login.html">Account</a></li>
                 <li><a href="learner-list.html">Learner List</a></li>
                 <li><a href="sender.html" class="current">Sender</a></li>
-                <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
             </ul>
         </nav>
     </header>
@@ -343,13 +342,6 @@ window.addEventListener('storage', e=>{
     if (teacherNameInput && u.displayName) {
       teacherNameInput.value = u.displayName;
     }
-    const logoutLink = document.getElementById('logout-link');
-    logoutLink.style.display = 'inline-flex';
-    logoutLink.addEventListener('click', async ev=>{
-      ev.preventDefault();
-      await authInstance.signOut();
-      window.location.replace('signup-login.html');
-    });
     document.body.style.display = 'block';
   });
 })();

@@ -89,7 +89,6 @@ footer {
           <li><a href="signup-login.html" id="auth-link">Sign-Up/Login</a></li>
           <li><a href="learner-list.html" id="learner-link">Learner List</a></li>
           <li><a href="sender.html" id="sender-link">Sender</a></li>
-          <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
        </ul>
      </nav>
    </header>
@@ -135,7 +134,6 @@ footer {
   const authLink = document.getElementById("auth-link");
   const learnerLink = document.getElementById("learner-link");
   const senderLink = document.getElementById("sender-link");
-  const logoutLink = document.getElementById("logout-link");
   let isVerifiedUser = false;
 
   function applyLoggedOutNav() {
@@ -144,7 +142,6 @@ footer {
     authLink.setAttribute("href", "signup-login.html");
     learnerLink.style.display = "inline";
     senderLink.style.display = "inline";
-    logoutLink.style.display = "none";
     isVerifiedUser = false;
   }
 
@@ -154,7 +151,6 @@ footer {
     authLink.setAttribute("href", "signup-login.html");
     learnerLink.style.display = "inline";
     senderLink.style.display = "inline";
-    logoutLink.style.display = "inline-flex";
     isVerifiedUser = true;
   }
 
@@ -184,11 +180,6 @@ footer {
   learnerLink.addEventListener("click", guardProtectedLink);
   senderLink.addEventListener("click", guardProtectedLink);
 
-  logoutLink.addEventListener("click", async (e) => {
-    e.preventDefault();
-    await auth.signOut();
-    applyLoggedOutNav();
-  });
 })();
 </script>
 <script src="pwa-register.js"></script>

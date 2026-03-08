@@ -198,7 +198,6 @@ footer {
                 <li><a href="signup-login.html" id="auth-nav-link" class="current">Sign-Up/Login</a></li>
                 <li><a href="learner-list.html">Learner List</a></li>
                 <li><a href="sender.html">Sender</a></li>
-                <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
             </ul>
         </nav>
     </header>
@@ -284,7 +283,6 @@ footer {
   const loggedInPanel = document.getElementById('logged-in-panel');
   const loggedInEmail = document.getElementById('logged-in-email');
   const authNavLink = document.getElementById('auth-nav-link');
-  const navLogoutLink = document.getElementById('logout-link');
   const resendButton = document.getElementById('resend-verification');
   const resendPanelButton = document.getElementById('resend-verification-panel');
 
@@ -311,7 +309,6 @@ footer {
     loggedInPanel.style.display = 'none';
     authNavLink.textContent = 'Sign-Up/Login';
     authNavLink.setAttribute('href', 'signup-login.html');
-    navLogoutLink.style.display = 'none';
   }
 
   function showSignedInPanel(user, verified){
@@ -322,7 +319,6 @@ footer {
     loggedInEmail.textContent = user.email ? ('Signed in as ' + user.email) : '';
     authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
-    navLogoutLink.style.display = 'inline-flex';
   }
 
   function formatAuthError(err){
@@ -421,10 +417,6 @@ footer {
     await doSignOut();
   });
 
-  navLogoutLink.addEventListener('click', async ev=>{
-    ev.preventDefault();
-    await doSignOut();
-  });
 </script>
 <script src="pwa-register.js"></script>
 </body>

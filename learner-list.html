@@ -178,10 +178,9 @@ footer {
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
-                <li><a href="signup-login.html">Sign-Up/Login</a></li>
+                <li><a href="signup-login.html">Account</a></li>
                 <li><a href="learner-list.html" class="current">Learner List</a></li>
                 <li><a href="sender.html">Sender</a></li>
-                <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
             </ul>
         </nav>
     </header>
@@ -293,13 +292,6 @@ footer {
       window.location.replace('signup-login.html');
       return;
     }
-    const logoutLink = document.getElementById('logout-link');
-    logoutLink.style.display = 'inline-flex';
-    logoutLink.addEventListener('click', async ev=>{
-      ev.preventDefault();
-      await auth.signOut();
-      window.location.replace('signup-login.html');
-    });
     document.body.style.display = 'block';
   });
 })();
