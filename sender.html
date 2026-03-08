@@ -227,7 +227,7 @@ footer {
                         <input type="text" name="location" placeholder="e.g. Room 101">
                     </label>
                     <label>Teacher email:<br>
-                        <input type="email" name="teacher_email" placeholder="teacher@sunnyvaleisd.net">
+                        <input type="email" name="teacher_email" placeholder="teacher@sunnyvaleisd.net" readonly>
                     </label>
                     <label>Teacher name (shown to learners):<br>
                         <input type="text" name="teacher_name" placeholder="e.g. Ms. Johnson" required>
@@ -404,6 +404,7 @@ window.addEventListener('storage', e=>{
 document.getElementById('send-btn').addEventListener('click', function(){
     const sendBtn = document.getElementById('send-btn');
     const status = document.getElementById('send-status');
+    const currentUser = authInstance && authInstance.currentUser ? authInstance.currentUser : null;
     const learners = JSON.parse(localStorage.getItem('learners')||'[]');
     const selectedLearners = Array.from(document.querySelectorAll('.scroll-container input[type=checkbox]:checked'))
         .map(function (cb) {
@@ -419,7 +420,11 @@ document.getElementById('send-btn').addEventListener('click', function(){
         })
         .filter(Boolean);
     const location = document.querySelector('#location-form input[name=location]').value.trim();
-    const teacherEmail = document.querySelector('#location-form input[name=teacher_email]').value.trim();
+    const teacherEmailInput = document.querySelector('#location-form input[name=teacher_email]');
+    if (teacherEmailInput && currentUser && currentUser.email) {
+        teacherEmailInput.value = currentUser.email;
+    }
+    const teacherEmail = teacherEmailInput ? teacherEmailInput.value.trim() : '';
     const teacherName = document.querySelector('#location-form input[name=teacher_name]').value.trim();
     const description = document.querySelector('#location-form textarea[name=description]').value.trim();
 
