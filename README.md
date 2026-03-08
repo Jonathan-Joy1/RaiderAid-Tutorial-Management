@@ -5,6 +5,9 @@ This repository contains the files and programs for the Email Reminder, a tutori
 GitHub Pages URL:
 `https://jonathan-joy1.github.io/RaiderAid-Tutorial-Management/`
 
+## Instruction Manual
+[Open the instruction manual](./Instruction_Manual.txt)
+
 ## Install As PWA
 1. Open the live app URL in Chrome or Edge.
 2. Click the install icon in the address bar (or use browser menu -> Install app).
