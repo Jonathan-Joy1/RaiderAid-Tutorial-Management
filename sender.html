@@ -163,6 +163,21 @@ section {
     margin-bottom: 10px;
 }
 
+.location-part input.locked-input[readonly] {
+    background-color: #ececec;
+    border: 1px solid #b5b5b5;
+    color: #444;
+    cursor: not-allowed;
+}
+
+.field-note {
+    display: block;
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: -6px;
+    margin-bottom: 10px;
+}
+
 .location-part textarea {
     width: 100%;
     max-width: 400px;
@@ -227,8 +242,9 @@ footer {
                         <input type="text" name="location" placeholder="e.g. Room 101">
                     </label>
                     <label>Teacher email:<br>
-                        <input type="email" name="teacher_email" placeholder="teacher@sunnyvaleisd.net" readonly>
+                        <input type="email" name="teacher_email" class="locked-input" placeholder="teacher@sunnyvaleisd.net" title="This email comes from your signed-in account and cannot be edited." readonly>
                     </label>
+                    <small class="field-note">Locked to your signed-in account email.</small>
                     <label>Teacher name (shown to learners):<br>
                         <input type="text" name="teacher_name" placeholder="e.g. Ms. Johnson" required>
                     </label>
