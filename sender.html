@@ -216,7 +216,7 @@ footer {
                 <div id="sender-empty-hint" class="list-empty-hint" style="display:none;">No students added yet.</div>
                 <div class="scroll-container">
                     <ul>
-                        <li class="empty-state">No students added yet.</li>
+                        <li class="empty-state"></li>
                     </ul>
                 </div>
             </div>
@@ -319,10 +319,6 @@ function populateLearners(){
     ul.innerHTML = '';
     if (!learners.length) {
         emptyHint.style.display = 'block';
-        const empty = document.createElement('li');
-        empty.className = 'empty-state';
-        empty.textContent = 'No students added yet.';
-        ul.appendChild(empty);
         return;
     }
     emptyHint.style.display = 'none';
