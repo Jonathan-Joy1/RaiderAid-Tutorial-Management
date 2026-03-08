@@ -316,6 +316,8 @@ footer {
     a.classList.remove('active');
     if(a.getAttribute('href') === current){ a.classList.add('active'); }
     a.addEventListener('click',()=>{
+      links.forEach(link => link.classList.remove('active', 'current'));
+      a.classList.add('active');
       document.getElementById('loader').style.display='flex';
     });
   });
