@@ -31,7 +31,8 @@ nav ul {
    gap: 8px;
 }
 nav ul li {
-   display: flex;
+   display: block;
+   flex: 0 0 112px;
 }
 nav ul li a {
    text-decoration: none;
@@ -42,6 +43,7 @@ nav ul li a {
    min-height: 44px;
    padding: 8px 10px;
    box-sizing: border-box;
+   width: 100%;
 }
 
 nav ul li a.active,
@@ -282,6 +284,7 @@ footer {
   const loggedInPanel = document.getElementById('logged-in-panel');
   const loggedInEmail = document.getElementById('logged-in-email');
   const authNavLink = document.getElementById('auth-nav-link');
+  const navLogoutLink = document.getElementById('logout-link');
   const resendButton = document.getElementById('resend-verification');
   const resendPanelButton = document.getElementById('resend-verification-panel');
 
@@ -308,6 +311,7 @@ footer {
     loggedInPanel.style.display = 'none';
     authNavLink.textContent = 'Sign-Up/Login';
     authNavLink.setAttribute('href', 'signup-login.html');
+    navLogoutLink.style.display = 'none';
   }
 
   function showSignedInPanel(user, verified){
@@ -316,13 +320,9 @@ footer {
     showResendPanelButton(!verified);
     loggedInPanel.style.display = 'block';
     loggedInEmail.textContent = user.email ? ('Signed in as ' + user.email) : '';
-    if (verified) {
-      authNavLink.textContent = 'Sign Out';
-      authNavLink.setAttribute('href', '#');
-    } else {
-      authNavLink.textContent = 'Account';
-      authNavLink.setAttribute('href', 'signup-login.html');
-    }
+    authNavLink.textContent = 'Account';
+    authNavLink.setAttribute('href', 'signup-login.html');
+    navLogoutLink.style.display = 'inline-flex';
   }
 
   function formatAuthError(err){
@@ -421,11 +421,9 @@ footer {
     await doSignOut();
   });
 
-  authNavLink.addEventListener('click', async ev=>{
-    if(authNavLink.getAttribute('href') === '#'){
-      ev.preventDefault();
-      await doSignOut();
-    }
+  navLogoutLink.addEventListener('click', async ev=>{
+    ev.preventDefault();
+    await doSignOut();
   });
 </script>
 <script src="pwa-register.js"></script>
