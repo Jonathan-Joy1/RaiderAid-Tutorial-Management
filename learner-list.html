@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Learner List</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,14 +25,22 @@ header {
 nav ul {
    list-style-type: none;
    padding: 0;
+   margin: 0;
+   display: flex;
+   flex-wrap: wrap;
+   justify-content: center;
+   gap: 12px;
 }
 nav ul li {
-   display: inline;
-   margin-right: 20px;
+   display: block;
 }
 nav ul li a {
    text-decoration: none;
-   color: #fff;
+   color: #111;
+   display: inline-flex;
+   align-items: center;
+   min-height: 44px;
+   padding: 8px 12px;
 }
 
 nav ul li a.active,
@@ -166,11 +174,8 @@ footer {
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
-                <li><a href="#"> </a></li>
                 <li><a href="signup-login.html">Sign-Up/Login</a></li>
-                <li><a href="#"> </a></li>
                 <li><a href="learner-list.html" class="current">Learner List</a></li>
-                <li><a href="#"> </a></li>
                 <li><a href="sender.html">Sender</a></li>
                 <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
             </ul>
