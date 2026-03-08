@@ -86,7 +86,7 @@ footer {
      <nav>
        <ul>
           <li><a href="home.html" class="current">Home</a></li>
-          <li><a href="signup-login.html" id="auth-link">Sign-Up/Login</a></li>
+          <li><a href="signup-login.html" id="auth-link" style="visibility:hidden;">Sign-Up/Login</a></li>
           <li><a href="learner-list.html" id="learner-link">Learner List</a></li>
           <li><a href="sender.html" id="sender-link">Sender</a></li>
        </ul>
@@ -145,6 +145,7 @@ footer {
     const cached = localStorage.getItem(NAV_AUTH_STATE_KEY);
     authLink.textContent = cached === "account" ? "Account" : "Sign-Up/Login";
     authLink.setAttribute("href", "signup-login.html");
+    authLink.style.visibility = "visible";
   }
 
   function applyLoggedOutNav() {
