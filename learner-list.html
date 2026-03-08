@@ -39,8 +39,11 @@ nav ul li a {
    color: #111;
    display: inline-flex;
    align-items: center;
+   justify-content: center;
    min-height: 44px;
+   min-width: 132px;
    padding: 8px 12px;
+   box-sizing: border-box;
 }
 
 nav ul li a.active,
@@ -177,7 +180,7 @@ footer {
                 <li><a href="signup-login.html">Sign-Up/Login</a></li>
                 <li><a href="learner-list.html" class="current">Learner List</a></li>
                 <li><a href="sender.html">Sender</a></li>
-                <li><a href="#" id="logout-link" style="display:none;">Logout</a></li>
+                <li><a href="#" id="logout-link" style="visibility:hidden;pointer-events:none;">Logout</a></li>
             </ul>
         </nav>
     </header>
@@ -290,7 +293,8 @@ footer {
       return;
     }
     const logoutLink = document.getElementById('logout-link');
-    logoutLink.style.display = 'inline';
+    logoutLink.style.visibility = 'visible';
+    logoutLink.style.pointerEvents = 'auto';
     logoutLink.addEventListener('click', async ev=>{
       ev.preventDefault();
       await auth.signOut();
