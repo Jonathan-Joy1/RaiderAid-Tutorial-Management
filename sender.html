@@ -309,6 +309,7 @@ const CONFIRM_LINK_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const MAX_RECIPIENTS_PER_SEND = 25;
 const SEND_COOLDOWN_MS = 15000;
 const MIN_SEND_DELAY_MS = 5000;
+const DAILY_SEND_HISTORY_KEY = "raideraid_daily_send_history_v1";
 let lastSendStartedAt = 0;
 const senderPageLoadedAt = Date.now();
 
@@ -318,6 +319,27 @@ function isValidEmail(value) {
 
 function normalizeEmail(value) {
     return String(value || "").trim().toLowerCase();
+}
+
+function getTodayLocalDateKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return year + "-" + month + "-" + day;
+}
+
+function getDailySendHistory() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(DAILY_SEND_HISTORY_KEY) || "{}");
+        return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_err) {
+        return {};
+    }
+}
+
+function setDailySendHistory(history) {
+    localStorage.setItem(DAILY_SEND_HISTORY_KEY, JSON.stringify(history || {}));
 }
 
 function isEmailJsConfigured() {
@@ -564,6 +586,28 @@ document.getElementById('send-btn').addEventListener('click', function(){
         alert('Please wait ' + waitSeconds + ' second(s) before sending again.');
         return;
     }
+
+    const todayKey = getTodayLocalDateKey();
+    const sendHistory = getDailySendHistory();
+    const blockedByDailyLimit = uniqueSelectedLearners.filter(function (learner) {
+        return sendHistory[learner.email] === todayKey;
+    });
+    const eligibleLearners = uniqueSelectedLearners.filter(function (learner) {
+        return sendHistory[learner.email] !== todayKey;
+    });
+
+    if(!eligibleLearners.length){
+        const blockedList = blockedByDailyLimit.map(function (l) { return l.email; }).join(', ');
+        status.textContent = '';
+        alert('Already sent today for selected student(s): ' + blockedList);
+        return;
+    }
+
+    if(blockedByDailyLimit.length){
+        const blockedList = blockedByDailyLimit.map(function (l) { return l.email; }).join(', ');
+        alert('Skipping already-sent-today student(s): ' + blockedList);
+    }
+
     lastSendStartedAt = now;
 
     sendBtn.disabled = true;
@@ -572,20 +616,35 @@ document.getElementById('send-btn').addEventListener('click', function(){
     const senderName = deriveSenderName(teacherName, senderEmail);
 
     Promise.allSettled(
-        uniqueSelectedLearners.map(function (learner) {
+        eligibleLearners.map(function (learner) {
             return sendEmailViaEmailJS(learner.email, learner.name, location, senderEmail, senderName, description);
         })
     )
         .then(results=>{
             const failed = results
-                .map((result, index) => ({result, recipient: uniqueSelectedLearners[index] && uniqueSelectedLearners[index].email}))
+                .map((result, index) => ({result, recipient: eligibleLearners[index] && eligibleLearners[index].email}))
                 .filter(entry => entry.result.status === 'rejected');
-            const sent = uniqueSelectedLearners.length - failed.length;
+            const sent = eligibleLearners.length - failed.length;
+            const history = getDailySendHistory();
+            if (sent > 0) {
+                results.forEach(function (result, index) {
+                    if (result.status === 'fulfilled') {
+                        const recipient = eligibleLearners[index];
+                        if (recipient && recipient.email) {
+                            history[recipient.email] = todayKey;
+                        }
+                    }
+                });
+                setDailySendHistory(history);
+            }
             if (failed.length) {
                 const failedList = failed.map(f => f.recipient).join(', ');
-                status.textContent = 'Sent ' + sent + ' of ' + uniqueSelectedLearners.length + '. Failed: ' + failedList;
+                status.textContent = 'Sent ' + sent + ' of ' + eligibleLearners.length + '. Failed: ' + failedList;
             } else {
                 status.textContent = 'Sent ' + sent + ' reminder email(s).';
+            }
+            if (blockedByDailyLimit.length) {
+                status.textContent += ' Skipped today: ' + blockedByDailyLimit.length + '.';
             }
             alert(status.textContent);
         })
