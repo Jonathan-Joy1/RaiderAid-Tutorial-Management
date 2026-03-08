@@ -195,7 +195,7 @@ footer {
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
-                <li><a href="signup-login.html" id="auth-nav-link" class="current">Sign-Up/Login</a></li>
+                <li><a href="signup-login.html" id="auth-nav-link" class="current" style="visibility:hidden;">Sign-Up/Login</a></li>
                 <li><a href="learner-list.html">Learner List</a></li>
                 <li><a href="sender.html">Sender</a></li>
             </ul>
@@ -307,6 +307,7 @@ footer {
     showResendButton(false);
     showResendPanelButton(false);
     loggedInPanel.style.display = 'none';
+    authNavLink.style.visibility = 'visible';
     authNavLink.textContent = 'Sign-Up/Login';
     authNavLink.setAttribute('href', 'signup-login.html');
   }
@@ -317,6 +318,7 @@ footer {
     showResendPanelButton(!verified);
     loggedInPanel.style.display = 'block';
     loggedInEmail.textContent = user.email ? ('Signed in as ' + user.email) : '';
+    authNavLink.style.visibility = 'visible';
     authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
   }

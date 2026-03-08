@@ -86,7 +86,7 @@ footer {
      <nav>
        <ul>
           <li><a href="home.html" class="current">Home</a></li>
-          <li><a href="signup-login.html" id="auth-link">Sign-Up/Login</a></li>
+          <li><a href="signup-login.html" id="auth-link" style="visibility:hidden;">Sign-Up/Login</a></li>
           <li><a href="learner-list.html" id="learner-link">Learner List</a></li>
           <li><a href="sender.html" id="sender-link">Sender</a></li>
        </ul>
@@ -137,7 +137,7 @@ footer {
   let isVerifiedUser = false;
 
   function applyLoggedOutNav() {
-    authLink.style.display = "inline";
+    authLink.style.visibility = "visible";
     authLink.textContent = "Sign-Up/Login";
     authLink.setAttribute("href", "signup-login.html");
     learnerLink.style.display = "inline";
@@ -146,15 +146,13 @@ footer {
   }
 
   function applyLoggedInNav() {
-    authLink.style.display = "inline";
+    authLink.style.visibility = "visible";
     authLink.textContent = "Account";
     authLink.setAttribute("href", "signup-login.html");
     learnerLink.style.display = "inline";
     senderLink.style.display = "inline";
     isVerifiedUser = true;
   }
-
-  applyLoggedOutNav();
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
