@@ -1,4 +1,4 @@
-const CACHE_NAME = "raideraid-cache-v2";
+const CACHE_NAME = "raideraid-cache-v3";
 const BASE_URL = self.registration.scope;
 const HOME_URL = new URL("home.html", BASE_URL).toString();
 const APP_SHELL = [
