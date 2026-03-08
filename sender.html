@@ -230,7 +230,7 @@ footer {
                         <input type="email" name="teacher_email" placeholder="teacher@sunnyvaleisd.net">
                     </label>
                     <label>Teacher name (shown to learners):<br>
-                        <input type="text" name="teacher_name" placeholder="e.g. Ms. Johnson">
+                        <input type="text" name="teacher_name" placeholder="e.g. Ms. Johnson" required>
                     </label>
                     <label>Description:<br>
                         <textarea name="description" placeholder="Describe the RaiderAid activity for learners (club, tutorial, etc.)" required></textarea>
@@ -436,6 +436,11 @@ document.getElementById('send-btn').addEventListener('click', function(){
     if(!teacherEmail){
         status.textContent = '';
         alert('Please enter the teacher response email.');
+        return;
+    }
+    if(!teacherName){
+        status.textContent = '';
+        alert('Please enter the teacher name.');
         return;
     }
     if(!description){
