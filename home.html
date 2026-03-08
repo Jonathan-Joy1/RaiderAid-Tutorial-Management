@@ -20,6 +20,19 @@ header {
    padding: 20px;
    text-align: center;
 }
+
+.brand-title {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 10px;
+}
+
+.brand-icon {
+   width: 36px;
+   height: 36px;
+   border-radius: 8px;
+}
 nav ul {
    list-style-type: none;
    padding: 0;
@@ -94,7 +107,7 @@ footer {
 <body>
   <div id="loader"><div class="spinner"></div></div>
   <header>
-     <h1>RaiderAid Reminder</h1>
+     <h1 class="brand-title"><img src="icons/icon-192.png" alt="RaiderAid logo" class="brand-icon">RaiderAid Reminder</h1>
      <nav>
        <ul>
           <li><a href="home.html" class="current">Home</a></li>

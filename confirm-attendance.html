@@ -29,6 +29,14 @@
         }
         h1 {
             margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .title-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
         }
         .meta {
             margin-bottom: 16px;
@@ -62,7 +70,7 @@
 </head>
 <body>
     <main class="card">
-        <h1>Attendance Confirmation</h1>
+        <h1><img src="icons/icon-192.png" alt="RaiderAid logo" class="title-icon">Attendance Confirmation</h1>
         <div class="meta">
             <div><strong>Learner:</strong> <span id="learner-email">-</span></div>
             <div><strong>Teacher:</strong> <span id="sender-name">-</span></div>

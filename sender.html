@@ -23,6 +23,19 @@ header {
    padding: 20px;
    text-align: center;
 }
+
+.brand-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+}
 nav ul {
    list-style-type: none;
    padding: 0;
@@ -188,6 +201,14 @@ section {
     resize: vertical;
 }
 
+.hp-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 .button-container {
     margin-top: 20px;
 }
@@ -214,7 +235,7 @@ footer {
 <body>
     <div id="loader"><div class="spinner"></div></div>
     <header>
-        <h1>RaiderAid Reminder</h1>
+        <h1 class="brand-title"><img src="icons/icon-192.png" alt="RaiderAid logo" class="brand-icon">RaiderAid Reminder</h1>
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
@@ -251,6 +272,10 @@ footer {
                     <label>Description:<br>
                         <textarea name="description" placeholder="Describe the RaiderAid activity for learners (club, tutorial, etc.)" required></textarea>
                     </label>
+                    <div class="hp-field" aria-hidden="true">
+                        <label for="website_url">Website</label>
+                        <input type="text" id="website_url" name="website_url" tabindex="-1" autocomplete="off">
+                    </div>
                 </form>
             </div>
             <div class="button-container">
@@ -271,6 +296,19 @@ const EMAILJS_CONFIG = {
 };
 const APP_BASE_URL = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "");
 const CONFIRM_LINK_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+const MAX_RECIPIENTS_PER_SEND = 25;
+const SEND_COOLDOWN_MS = 15000;
+const MIN_SEND_DELAY_MS = 5000;
+let lastSendStartedAt = 0;
+const senderPageLoadedAt = Date.now();
+
+function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase();
+}
 
 function isEmailJsConfigured() {
     return EMAILJS_CONFIG.publicKey &&
@@ -429,24 +467,40 @@ document.getElementById('send-btn').addEventListener('click', function(){
             const first = (learner.first || "").trim();
             const last = (learner.last || "").trim();
             const fullName = (first + " " + last).trim();
+            const cleanEmail = normalizeEmail(learner.email);
+            if (!isValidEmail(cleanEmail)) return null;
             return {
-                email: String(learner.email).trim(),
-                name: fullName || String(learner.email).trim()
+                email: cleanEmail,
+                name: fullName || cleanEmail
             };
         })
         .filter(Boolean);
+    const uniqueSelectedLearners = [];
+    const seenEmails = new Set();
+    selectedLearners.forEach(function(learner){
+        if (seenEmails.has(learner.email)) return;
+        seenEmails.add(learner.email);
+        uniqueSelectedLearners.push(learner);
+    });
     const location = document.querySelector('#location-form input[name=location]').value.trim();
     const teacherEmailInput = document.querySelector('#location-form input[name=teacher_email]');
     if (teacherEmailInput && currentUser && currentUser.email) {
         teacherEmailInput.value = currentUser.email;
     }
-    const teacherEmail = teacherEmailInput ? teacherEmailInput.value.trim() : '';
+    const teacherEmail = teacherEmailInput ? normalizeEmail(teacherEmailInput.value) : '';
     const teacherName = document.querySelector('#location-form input[name=teacher_name]').value.trim();
     const description = document.querySelector('#location-form textarea[name=description]').value.trim();
+    const honeypotField = document.querySelector('#location-form input[name=website_url]');
+    const honeypotValue = honeypotField ? honeypotField.value.trim() : '';
 
-    if(!selectedLearners.length){
+    if(!uniqueSelectedLearners.length){
         status.textContent = '';
-        alert('Please select at least one student');
+        alert('Please select at least one student with a valid email.');
+        return;
+    }
+    if(uniqueSelectedLearners.length > MAX_RECIPIENTS_PER_SEND){
+        status.textContent = '';
+        alert('Please send to at most ' + MAX_RECIPIENTS_PER_SEND + ' students at a time.');
         return;
     }
     if(!location){
@@ -459,6 +513,11 @@ document.getElementById('send-btn').addEventListener('click', function(){
         alert('Please enter the teacher response email.');
         return;
     }
+    if(!isValidEmail(teacherEmail)){
+        status.textContent = '';
+        alert('Teacher email is invalid.');
+        return;
+    }
     if(!teacherName){
         status.textContent = '';
         alert('Please enter the teacher name.');
@@ -469,11 +528,33 @@ document.getElementById('send-btn').addEventListener('click', function(){
         alert('Please enter a description before sending.');
         return;
     }
+    if(honeypotValue){
+        status.textContent = '';
+        alert('Unable to send right now. Please refresh and try again.');
+        return;
+    }
+    if(Date.now() - senderPageLoadedAt < MIN_SEND_DELAY_MS){
+        const waitSeconds = Math.ceil((MIN_SEND_DELAY_MS - (Date.now() - senderPageLoadedAt)) / 1000);
+        status.textContent = '';
+        alert('Please wait ' + waitSeconds + ' second(s) before sending.');
+        return;
+    }
     if(!isEmailJsConfigured()){
         status.textContent = '';
         alert('EmailJS is not configured yet. Update EMAILJS_CONFIG in sender.html.');
         return;
     }
+    if(sendBtn.disabled){
+        return;
+    }
+    const now = Date.now();
+    if(now - lastSendStartedAt < SEND_COOLDOWN_MS){
+        const waitSeconds = Math.ceil((SEND_COOLDOWN_MS - (now - lastSendStartedAt)) / 1000);
+        status.textContent = '';
+        alert('Please wait ' + waitSeconds + ' second(s) before sending again.');
+        return;
+    }
+    lastSendStartedAt = now;
 
     sendBtn.disabled = true;
     status.textContent = 'Sending...';
@@ -481,18 +562,18 @@ document.getElementById('send-btn').addEventListener('click', function(){
     const senderName = deriveSenderName(teacherName, senderEmail);
 
     Promise.allSettled(
-        selectedLearners.map(function (learner) {
+        uniqueSelectedLearners.map(function (learner) {
             return sendEmailViaEmailJS(learner.email, learner.name, location, senderEmail, senderName, description);
         })
     )
         .then(results=>{
             const failed = results
-                .map((result, index) => ({result, recipient: selectedLearners[index] && selectedLearners[index].email}))
+                .map((result, index) => ({result, recipient: uniqueSelectedLearners[index] && uniqueSelectedLearners[index].email}))
                 .filter(entry => entry.result.status === 'rejected');
-            const sent = selectedLearners.length - failed.length;
+            const sent = uniqueSelectedLearners.length - failed.length;
             if (failed.length) {
                 const failedList = failed.map(f => f.recipient).join(', ');
-                status.textContent = 'Sent ' + sent + ' of ' + selectedLearners.length + '. Failed: ' + failedList;
+                status.textContent = 'Sent ' + sent + ' of ' + uniqueSelectedLearners.length + '. Failed: ' + failedList;
             } else {
                 status.textContent = 'Sent ' + sent + ' reminder email(s).';
             }

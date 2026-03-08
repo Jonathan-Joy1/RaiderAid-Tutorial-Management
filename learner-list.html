@@ -22,6 +22,19 @@ header {
    padding: 20px;
    text-align: center;
 }
+
+.brand-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+}
 nav ul {
    list-style-type: none;
    padding: 0;
@@ -196,7 +209,7 @@ footer {
 <body>
     <div id="loader"><div class="spinner"></div></div>
     <header>
-        <h1>RaiderAid Reminder</h1>
+        <h1 class="brand-title"><img src="icons/icon-192.png" alt="RaiderAid logo" class="brand-icon">RaiderAid Reminder</h1>
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
@@ -232,6 +245,14 @@ footer {
 <script>
 // script to store/display learners with edit/delete
 (function(){
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+    }
+
+    function normalizeEmail(email) {
+        return String(email || "").trim().toLowerCase();
+    }
+
     function loadLearners(){
         const ul = document.querySelector('.list-section .scroll-container ul');
         ul.innerHTML = '';
@@ -267,11 +288,29 @@ footer {
         const l = learners[i];
         const email = prompt('Email', l.email);
         if(email === null) return;
+        const cleanEmail = normalizeEmail(email);
+        if (!isValidEmail(cleanEmail)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+        const duplicate = learners.some(function(entry, idx){
+            return idx !== i && normalizeEmail(entry.email) === cleanEmail;
+        });
+        if (duplicate) {
+            alert('That learner email already exists.');
+            return;
+        }
         const first = prompt('First name', l.first);
         if(first === null) return;
         const last = prompt('Last name', l.last);
         if(last === null) return;
-        learners[i] = {email, first, last};
+        const cleanFirst = String(first).trim();
+        const cleanLast = String(last).trim();
+        if (!cleanFirst || !cleanLast) {
+            alert('First and last name are required.');
+            return;
+        }
+        learners[i] = {email: cleanEmail, first: cleanFirst, last: cleanLast};
         localStorage.setItem('learners', JSON.stringify(learners));
         loadLearners();
     }
@@ -285,16 +324,29 @@ footer {
 
     document.querySelector('.add-section form').addEventListener('submit',function(e){
         e.preventDefault();
-        const email = this.elements['email'].value.trim();
+        const email = normalizeEmail(this.elements['email'].value);
         const first = this.elements['first'].value.trim();
         const last = this.elements['last'].value.trim();
-        if(email && first && last){
-            const learners = JSON.parse(localStorage.getItem('learners')||'[]');
-            learners.push({email,first,last});
-            localStorage.setItem('learners', JSON.stringify(learners));
-            loadLearners();
-            this.reset();
+        if(!email || !first || !last){
+            alert('Email, first name, and last name are required.');
+            return;
         }
+        if (!isValidEmail(email)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+        const duplicate = learners.some(function(entry){
+            return normalizeEmail(entry.email) === email;
+        });
+        if (duplicate) {
+            alert('That learner email already exists.');
+            return;
+        }
+        learners.push({email, first, last});
+        localStorage.setItem('learners', JSON.stringify(learners));
+        loadLearners();
+        this.reset();
     });
     loadLearners();
 })();
