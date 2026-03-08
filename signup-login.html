@@ -170,6 +170,15 @@ footer {
     text-align: center;
 }
 
+#auth-loading {
+    margin: 0 auto;
+    max-width: 360px;
+    text-align: center;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 4px;
+}
+
 #signout-btn {
     width: 100%;
     padding: 10px;
@@ -242,6 +251,7 @@ footer {
                     </form>
                 </div>
             </div>
+            <div id="auth-loading">Loading account...</div>
             <div id="logged-in-panel" class="auth-box">
                 <h2>Account</h2>
                 <p id="logged-in-email"></p>
@@ -279,6 +289,7 @@ footer {
   const auth = firebase.auth();
   let lastUnverifiedUser = null;
   const authRow = document.querySelector('.auth-row');
+  const authLoading = document.getElementById('auth-loading');
   const loggedInPanel = document.getElementById('logged-in-panel');
   const loggedInEmail = document.getElementById('logged-in-email');
   const authNavLink = document.getElementById('auth-nav-link');
@@ -313,6 +324,7 @@ footer {
   }
 
   function showAuthForms(){
+    authLoading.style.display = 'none';
     authRow.hidden = false;
     authRow.style.display = 'flex';
     showResendButton(false);
@@ -324,6 +336,7 @@ footer {
   }
 
   function showSignedInPanel(user, verified){
+    authLoading.style.display = 'none';
     authRow.hidden = true;
     authRow.style.display = 'none';
     showResendButton(false);
