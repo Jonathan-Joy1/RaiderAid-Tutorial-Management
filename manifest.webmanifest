@@ -1,0 +1,23 @@
+{
+  "name": "RaiderAid Reminder",
+  "short_name": "RaiderAid",
+  "id": "./home.html",
+  "description": "Tutorial management and learner reminder app.",
+  "start_url": "./home.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a2470",
+  "theme_color": "#1a2470",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
