@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Sign-Up/Login</title>
+    <title>Account</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1a2470">
     <link rel="manifest" href="manifest.webmanifest">
@@ -300,15 +300,11 @@ footer {
 <script>
 (function(){
   const current = location.pathname.split('/').pop() || 'home.html';
-  const navAuthState = localStorage.getItem("raideraid_nav_auth_state");
   const links = Array.from(document.querySelectorAll('nav ul li a'));
   links.forEach(a=>{
     a.classList.remove('active');
     if(a.getAttribute('href') === current){ a.classList.add('active'); }
     a.addEventListener('click',()=>{
-      if (a.id === 'auth-nav-link' && navAuthState === 'account') {
-        a.textContent = 'Account';
-      }
       links.forEach(link => link.classList.remove('active', 'current'));
       a.classList.add('active');
       document.getElementById('loader').style.display='flex';
@@ -336,7 +332,6 @@ footer {
   const loggedInPanel = document.getElementById('logged-in-panel');
   const loggedInEmail = document.getElementById('logged-in-email');
   const authNavLink = document.getElementById('auth-nav-link');
-  const NAV_AUTH_STATE_KEY = "raideraid_nav_auth_state";
   const resendButton = document.getElementById('resend-verification');
   const resendPanelButton = document.getElementById('resend-verification-panel');
 
@@ -356,11 +351,7 @@ footer {
     resendPanelButton.style.display = show ? 'block' : 'none';
   }
 
-  function setCachedNavState(isLoggedIn){
-    localStorage.setItem(NAV_AUTH_STATE_KEY, isLoggedIn ? 'account' : 'signup');
-  }
-
-  function applyCachedNavState(){
+  function applyNavState(){
     authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
   }
@@ -374,7 +365,6 @@ footer {
     loggedInPanel.style.display = 'none';
     authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
-    setCachedNavState(false);
   }
 
   function showSignedInPanel(user, verified){
@@ -387,7 +377,6 @@ footer {
     loggedInEmail.textContent = user.email ? ('Signed in as ' + user.email) : '';
     authNavLink.textContent = 'Account';
     authNavLink.setAttribute('href', 'signup-login.html');
-    setCachedNavState(true);
   }
 
   function formatAuthError(err){
@@ -416,7 +405,7 @@ footer {
     showAuthMessage('Your email is not verified yet. Click "Resend Verification Email" and check inbox/spam.', 'error');
   });
 
-  applyCachedNavState();
+  applyNavState();
 
   document.getElementById('signup-form').addEventListener('submit', e=>{
     e.preventDefault();
