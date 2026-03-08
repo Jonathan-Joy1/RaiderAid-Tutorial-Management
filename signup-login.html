@@ -27,6 +27,16 @@ header {
     align-items: center;
     justify-content: center;
     gap: 10px;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.brand-text {
+    background: linear-gradient(90deg, #0b3d91 0%, #1d66d2 55%, #d4af37 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 .brand-icon {
@@ -225,7 +235,7 @@ footer {
 <body>
     <div id="loader"><div class="spinner"></div></div>
     <header>
-        <h1 class="brand-title"><img src="icons/icon-192.png" alt="RaiderAid logo" class="brand-icon">RaiderAid Reminder</h1>
+        <h1 class="brand-title"><img src="icons/icon-192.png" alt="RaiderAid logo" class="brand-icon"><span class="brand-text">RaiderAid Reminder</span></h1>
         <nav>
             <ul>
                 <li><a href="home.html">Home</a></li>
