@@ -364,7 +364,6 @@ footer {
       showAuthForms();
       return;
     }
-    await user.reload();
     if (user.emailVerified) {
       showSignedInPanel(user, true);
       showAuthMessage('You are signed in. Use Learner List or Sender, or sign out here.', 'success');
@@ -398,7 +397,6 @@ footer {
     const password = e.target['login-password'].value;
     try {
       const cred = await auth.signInWithEmailAndPassword(email,password);
-      await cred.user.reload();
       if (!cred.user.emailVerified) {
         lastUnverifiedUser = cred.user;
         showSignedInPanel(cred.user, false);
