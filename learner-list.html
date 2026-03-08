@@ -311,11 +311,15 @@ footer {
 // nav highlight script
 (function(){
   const current = location.pathname.split('/').pop() || 'home.html';
+  const navAuthState = localStorage.getItem("raideraid_nav_auth_state");
   const links = Array.from(document.querySelectorAll('nav ul li a'));
   links.forEach(a=>{
     a.classList.remove('active');
     if(a.getAttribute('href') === current){ a.classList.add('active'); }
     a.addEventListener('click',()=>{
+      if (a.textContent.trim() === 'Account' && navAuthState === 'account') {
+        a.textContent = 'Account';
+      }
       links.forEach(link => link.classList.remove('active', 'current'));
       a.classList.add('active');
       document.getElementById('loader').style.display='flex';

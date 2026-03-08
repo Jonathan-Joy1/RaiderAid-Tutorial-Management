@@ -127,6 +127,7 @@ footer {
 
 (function(){
   const current = location.pathname.split('/').pop() || 'home.html';
+  const navAuthState = localStorage.getItem("raideraid_nav_auth_state");
   const links = Array.from(document.querySelectorAll('nav ul li a'));
   links.forEach(a => a.classList.remove('active'));
   const active = links.find(a => a.getAttribute('href') === current);
@@ -134,6 +135,9 @@ footer {
 
   links.forEach(a => {
     a.addEventListener('click', () => {
+      if (a.id === 'auth-link' && navAuthState === 'account') {
+        a.textContent = 'Account';
+      }
       links.forEach(link => link.classList.remove('active', 'current'));
       a.classList.add('active');
     });
