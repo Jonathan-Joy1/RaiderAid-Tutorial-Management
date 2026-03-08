@@ -123,6 +123,13 @@ section {
     text-align: left;
 }
 
+.empty-state {
+    color: #555;
+    font-style: italic;
+    list-style: none;
+    margin-left: 0;
+}
+
 .selection-part {
     margin-bottom: 20px;
 }
@@ -202,11 +209,7 @@ footer {
                 <h2>Select Student(s) to Remind:</h2>
                 <div class="scroll-container">
                     <ul>
-                        <li><label><input type="checkbox"/> Learner A</label></li>
-                        <li><label><input type="checkbox"/> Learner B</label></li>
-                        <li><label><input type="checkbox"/> Learner C</label></li>
-                        <li><label><input type="checkbox"/> Learner D</label></li>
-                        <li><label><input type="checkbox"/> Learner E</label></li> 
+                        <li class="empty-state">No students added yet.</li>
                     </ul>
                 </div>
             </div>
@@ -306,6 +309,13 @@ function populateLearners(){
     const learners = JSON.parse(localStorage.getItem('learners')||'[]');
     const ul = document.querySelector('.scroll-container ul');
     ul.innerHTML = '';
+    if (!learners.length) {
+        const empty = document.createElement('li');
+        empty.className = 'empty-state';
+        empty.textContent = 'No students added yet.';
+        ul.appendChild(empty);
+        return;
+    }
     learners.forEach((l,index)=>{
         const li = document.createElement('li');
         const chk = document.createElement('input');
