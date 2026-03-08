@@ -222,8 +222,8 @@ footer {
                     <label>Teacher name (shown to learners):<br>
                         <input type="text" name="teacher_name" placeholder="e.g. Ms. Johnson">
                     </label>
-                    <label>Description (optional):<br>
-                        <textarea name="description" placeholder="Describe the RaiderAid activity for learners (club, tutorial, etc.)"></textarea>
+                    <label>Description:<br>
+                        <textarea name="description" placeholder="Describe the RaiderAid activity for learners (club, tutorial, etc.)" required></textarea>
                     </label>
                 </form>
             </div>
@@ -420,6 +420,11 @@ document.getElementById('send-btn').addEventListener('click', function(){
     if(!teacherEmail){
         status.textContent = '';
         alert('Please enter the teacher response email.');
+        return;
+    }
+    if(!description){
+        status.textContent = '';
+        alert('Please enter a description before sending.');
         return;
     }
     if(!isEmailJsConfigured()){
