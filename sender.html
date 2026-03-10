@@ -304,6 +304,10 @@ const EMAILJS_CONFIG = {
     serviceId: "service_0nga3ei",
     templateId: "template_l6l82d6"
 };
+const PLAIN_LEARNERS_KEY = "learners";
+const VAULT_KEY = "raideraid_learners_vault_v1";
+const SESSION_PASSPHRASE_KEY = "raideraid_learners_passphrase_v1";
+const VAULT_ITERATIONS = 100000;
 const APP_BASE_URL = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "");
 const CONFIRM_LINK_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const MAX_RECIPIENTS_PER_SEND = 25;
@@ -319,6 +323,142 @@ function isValidEmail(value) {
 
 function normalizeEmail(value) {
     return String(value || "").trim().toLowerCase();
+}
+
+function safeParse(json, fallback) {
+    try {
+        const parsed = JSON.parse(json);
+        return Array.isArray(parsed) ? parsed : fallback;
+    } catch (_err) {
+        return fallback;
+    }
+}
+
+function bufToBase64(buf) {
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+function base64ToBuf(b64) {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+async function deriveKey(passphrase, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey(
+        "raw",
+        enc.encode(passphrase),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+    );
+    return window.crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: VAULT_ITERATIONS, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
+
+async function decryptLearners(vault, passphrase) {
+    const dec = new TextDecoder();
+    const salt = new Uint8Array(base64ToBuf(vault.salt || ""));
+    const iv = new Uint8Array(base64ToBuf(vault.iv || ""));
+    const key = await deriveKey(passphrase, salt);
+    const ciphertext = base64ToBuf(vault.data || "");
+    const plaintext = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+    const json = dec.decode(plaintext);
+    return safeParse(json, []);
+}
+
+async function unlockVault() {
+    const cached = sessionStorage.getItem(SESSION_PASSPHRASE_KEY);
+    if (cached) return cached;
+    const vaultRaw = localStorage.getItem(VAULT_KEY);
+    if (!vaultRaw) return null;
+    let vault;
+    try {
+        vault = JSON.parse(vaultRaw);
+    } catch (_err) {
+        return null;
+    }
+    while (true) {
+        const entered = prompt("Enter your learner list passphrase.");
+        if (!entered) return null;
+        try {
+            await decryptLearners(vault, entered);
+            sessionStorage.setItem(SESSION_PASSPHRASE_KEY, entered);
+            return entered;
+        } catch (_err) {
+            alert("Incorrect passphrase.");
+        }
+    }
+}
+
+async function ensureVaultReady() {
+    if (!window.crypto || !window.crypto.subtle) {
+        alert("This browser does not support secure storage.");
+        return false;
+    }
+    const vaultRaw = localStorage.getItem(VAULT_KEY);
+    if (vaultRaw) return true;
+    const existingPlain = localStorage.getItem(PLAIN_LEARNERS_KEY);
+    if (!existingPlain) return true;
+    const passphrase = prompt("Set a passphrase to lock learner data on this device.");
+    if (!passphrase) return false;
+    const confirmPass = prompt("Confirm passphrase.");
+    if (confirmPass !== passphrase) {
+        alert("Passphrases do not match.");
+        return false;
+    }
+    sessionStorage.setItem(SESSION_PASSPHRASE_KEY, passphrase);
+    const learners = safeParse(existingPlain, []);
+    const vault = await (async () => {
+        const enc = new TextEncoder();
+        const salt = window.crypto.getRandomValues(new Uint8Array(16));
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const key = await deriveKey(passphrase, salt);
+        const plaintext = enc.encode(JSON.stringify(learners || []));
+        const ciphertext = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+        return {
+            v: 1,
+            salt: bufToBase64(salt.buffer),
+            iv: bufToBase64(iv.buffer),
+            data: bufToBase64(ciphertext)
+        };
+    })();
+    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+    localStorage.removeItem(PLAIN_LEARNERS_KEY);
+    return true;
+}
+
+async function getLearners() {
+    await ensureVaultReady();
+    const vaultRaw = localStorage.getItem(VAULT_KEY);
+    if (!vaultRaw) return [];
+    let vault;
+    try {
+        vault = JSON.parse(vaultRaw);
+    } catch (_err) {
+        return [];
+    }
+    const passphrase = await unlockVault();
+    if (!passphrase) return [];
+    try {
+        return await decryptLearners(vault, passphrase);
+    } catch (_err) {
+        return [];
+    }
 }
 
 function getTodayLocalDateKey() {
@@ -398,8 +538,8 @@ async function sendEmailViaEmailJS(toEmail, learnerName, location, senderEmail, 
     }
 }
 
-function populateLearners(){
-    const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+async function populateLearners(){
+    const learners = await getLearners();
     const ul = document.querySelector('.scroll-container ul');
     const emptyHint = document.getElementById('sender-empty-hint');
     ul.innerHTML = '';
@@ -435,7 +575,7 @@ function deriveSenderName(nameValue, emailValue) {
 
 populateLearners();
 window.addEventListener('storage', e=>{
-    if(e.key==='learners') populateLearners();
+    if(e.key===VAULT_KEY || e.key===PLAIN_LEARNERS_KEY) populateLearners();
 });
 
 (function(){
@@ -487,11 +627,11 @@ window.addEventListener('storage', e=>{
   });
 })();
 
-document.getElementById('send-btn').addEventListener('click', function(){
+document.getElementById('send-btn').addEventListener('click', async function(){
     const sendBtn = document.getElementById('send-btn');
     const status = document.getElementById('send-status');
     const currentUser = authInstance && authInstance.currentUser ? authInstance.currentUser : null;
-    const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+    const learners = await getLearners();
     const selectedLearners = Array.from(document.querySelectorAll('.scroll-container input[type=checkbox]:checked'))
         .map(function (cb) {
             const learner = learners[cb.value];
