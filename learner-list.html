@@ -258,7 +258,7 @@ footer {
 (function(){
     const PLAIN_LEARNERS_KEY = "learners";
     const VAULT_KEY = "raideraid_learners_vault_v1";
-    const SESSION_PASSPHRASE_KEY = "raideraid_learners_passphrase_v1";
+    const SESSION_PASSPHRASE_KEY = "raideraid_learners_password_v1";
     const VAULT_ITERATIONS = 100000;
 
     function isValidEmail(email) {
@@ -340,16 +340,16 @@ footer {
         return safeParse(json, []);
     }
 
-    async function promptSetPassphrase() {
-        const passphrase = prompt("Set a passphrase to lock learner data on this device.");
-        if (!passphrase) return null;
-        const confirmPass = prompt("Confirm passphrase.");
-        if (confirmPass !== passphrase) {
-            alert("Passphrases do not match.");
+    async function promptSetPassword() {
+        const password = prompt("Set the password you will use to unlock the learner list.");
+        if (!password) return null;
+        const confirmPass = prompt("Confirm password.");
+        if (confirmPass !== password) {
+            alert("Passwords do not match.");
             return null;
         }
-        sessionStorage.setItem(SESSION_PASSPHRASE_KEY, passphrase);
-        return passphrase;
+        sessionStorage.setItem(SESSION_PASSPHRASE_KEY, password);
+        return password;
     }
 
     async function unlockVault() {
@@ -357,23 +357,23 @@ footer {
         if (cached) return cached;
         const vaultRaw = localStorage.getItem(VAULT_KEY);
         if (!vaultRaw) {
-            return promptSetPassphrase();
+            return promptSetPassword();
         }
         let vault;
         try {
             vault = JSON.parse(vaultRaw);
         } catch (_err) {
-            return promptSetPassphrase();
+            return promptSetPassword();
         }
         while (true) {
-            const entered = prompt("Enter your learner list passphrase.");
+            const entered = prompt("Enter your account password to unlock the learner list.");
             if (!entered) return null;
             try {
                 await decryptLearners(vault, entered);
                 sessionStorage.setItem(SESSION_PASSPHRASE_KEY, entered);
                 return entered;
             } catch (_err) {
-                alert("Incorrect passphrase.");
+                alert("Incorrect password.");
             }
         }
     }
@@ -387,7 +387,7 @@ footer {
         if (vaultRaw) return true;
         const existingPlain = localStorage.getItem(PLAIN_LEARNERS_KEY);
         if (!existingPlain) return true;
-        const passphrase = await promptSetPassphrase();
+        const passphrase = await promptSetPassword();
         if (!passphrase) return false;
         const learners = safeParse(existingPlain, []);
         const vault = await encryptLearners(learners, passphrase);

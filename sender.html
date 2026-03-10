@@ -306,7 +306,7 @@ const EMAILJS_CONFIG = {
 };
 const PLAIN_LEARNERS_KEY = "learners";
 const VAULT_KEY = "raideraid_learners_vault_v1";
-const SESSION_PASSPHRASE_KEY = "raideraid_learners_passphrase_v1";
+const SESSION_PASSPHRASE_KEY = "raideraid_learners_password_v1";
 const VAULT_ITERATIONS = 100000;
 const APP_BASE_URL = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "");
 const CONFIRM_LINK_TTL_MS = 1000 * 60 * 60 * 24 * 7;
@@ -393,14 +393,14 @@ async function unlockVault() {
         return null;
     }
     while (true) {
-        const entered = prompt("Enter your learner list passphrase.");
+        const entered = prompt("Enter your account password to unlock the learner list.");
         if (!entered) return null;
         try {
             await decryptLearners(vault, entered);
             sessionStorage.setItem(SESSION_PASSPHRASE_KEY, entered);
             return entered;
         } catch (_err) {
-            alert("Incorrect passphrase.");
+            alert("Incorrect password.");
         }
     }
 }
@@ -414,11 +414,11 @@ async function ensureVaultReady() {
     if (vaultRaw) return true;
     const existingPlain = localStorage.getItem(PLAIN_LEARNERS_KEY);
     if (!existingPlain) return true;
-    const passphrase = prompt("Set a passphrase to lock learner data on this device.");
+    const passphrase = prompt("Set the password you will use to unlock the learner list.");
     if (!passphrase) return false;
-    const confirmPass = prompt("Confirm passphrase.");
+    const confirmPass = prompt("Confirm password.");
     if (confirmPass !== passphrase) {
-        alert("Passphrases do not match.");
+        alert("Passwords do not match.");
         return false;
     }
     sessionStorage.setItem(SESSION_PASSPHRASE_KEY, passphrase);
