@@ -243,7 +243,6 @@ footer {
 
             <section class="list-section">
                 <h2>Learner List</h2>
-                <button id="clear-all-btn" type="button">Clear All Learners</button>
                 <div class="scroll-container">
                     <ul></ul>
                 </div>
@@ -256,11 +255,6 @@ footer {
 <script>
 // script to store/display learners with edit/delete
 (function(){
-    const PLAIN_LEARNERS_KEY = "learners";
-    const VAULT_KEY = "raideraid_learners_vault_v1";
-    const SESSION_PASSPHRASE_KEY = "raideraid_learners_passphrase_v1";
-    const VAULT_ITERATIONS = 100000;
-
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
     }
@@ -269,165 +263,10 @@ footer {
         return String(email || "").trim().toLowerCase();
     }
 
-    function safeParse(json, fallback) {
-        try {
-            const parsed = JSON.parse(json);
-            return Array.isArray(parsed) ? parsed : fallback;
-        } catch (_err) {
-            return fallback;
-        }
-    }
-
-    function bufToBase64(buf) {
-        const bytes = new Uint8Array(buf);
-        let binary = "";
-        for (let i = 0; i < bytes.length; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return btoa(binary);
-    }
-
-    function base64ToBuf(b64) {
-        const binary = atob(b64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-        return bytes.buffer;
-    }
-
-    async function deriveKey(passphrase, salt) {
-        const enc = new TextEncoder();
-        const keyMaterial = await window.crypto.subtle.importKey(
-            "raw",
-            enc.encode(passphrase),
-            "PBKDF2",
-            false,
-            ["deriveKey"]
-        );
-        return window.crypto.subtle.deriveKey(
-            { name: "PBKDF2", salt, iterations: VAULT_ITERATIONS, hash: "SHA-256" },
-            keyMaterial,
-            { name: "AES-GCM", length: 256 },
-            false,
-            ["encrypt", "decrypt"]
-        );
-    }
-
-    async function encryptLearners(learners, passphrase) {
-        const enc = new TextEncoder();
-        const salt = window.crypto.getRandomValues(new Uint8Array(16));
-        const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        const key = await deriveKey(passphrase, salt);
-        const plaintext = enc.encode(JSON.stringify(learners || []));
-        const ciphertext = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
-        return {
-            v: 1,
-            salt: bufToBase64(salt.buffer),
-            iv: bufToBase64(iv.buffer),
-            data: bufToBase64(ciphertext)
-        };
-    }
-
-    async function decryptLearners(vault, passphrase) {
-        const dec = new TextDecoder();
-        const salt = new Uint8Array(base64ToBuf(vault.salt || ""));
-        const iv = new Uint8Array(base64ToBuf(vault.iv || ""));
-        const key = await deriveKey(passphrase, salt);
-        const ciphertext = base64ToBuf(vault.data || "");
-        const plaintext = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-        const json = dec.decode(plaintext);
-        return safeParse(json, []);
-    }
-
-    async function promptSetPassphrase() {
-        const passphrase = prompt("Set a passphrase to lock learner data on this device.");
-        if (!passphrase) return null;
-        const confirmPass = prompt("Confirm passphrase.");
-        if (confirmPass !== passphrase) {
-            alert("Passphrases do not match.");
-            return null;
-        }
-        sessionStorage.setItem(SESSION_PASSPHRASE_KEY, passphrase);
-        return passphrase;
-    }
-
-    async function unlockVault() {
-        const cached = sessionStorage.getItem(SESSION_PASSPHRASE_KEY);
-        if (cached) return cached;
-        const vaultRaw = localStorage.getItem(VAULT_KEY);
-        if (!vaultRaw) {
-            return promptSetPassphrase();
-        }
-        let vault;
-        try {
-            vault = JSON.parse(vaultRaw);
-        } catch (_err) {
-            return promptSetPassphrase();
-        }
-        while (true) {
-            const entered = prompt("Enter your learner list passphrase.");
-            if (!entered) return null;
-            try {
-                await decryptLearners(vault, entered);
-                sessionStorage.setItem(SESSION_PASSPHRASE_KEY, entered);
-                return entered;
-            } catch (_err) {
-                alert("Incorrect passphrase.");
-            }
-        }
-    }
-
-    async function ensureVaultReady() {
-        if (!window.crypto || !window.crypto.subtle) {
-            alert("This browser does not support secure storage.");
-            return false;
-        }
-        const vaultRaw = localStorage.getItem(VAULT_KEY);
-        if (vaultRaw) return true;
-        const existingPlain = localStorage.getItem(PLAIN_LEARNERS_KEY);
-        if (!existingPlain) return true;
-        const passphrase = await promptSetPassphrase();
-        if (!passphrase) return false;
-        const learners = safeParse(existingPlain, []);
-        const vault = await encryptLearners(learners, passphrase);
-        localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
-        localStorage.removeItem(PLAIN_LEARNERS_KEY);
-        return true;
-    }
-
-    async function getLearners() {
-        await ensureVaultReady();
-        const vaultRaw = localStorage.getItem(VAULT_KEY);
-        if (!vaultRaw) return [];
-        let vault;
-        try {
-            vault = JSON.parse(vaultRaw);
-        } catch (_err) {
-            return [];
-        }
-        const passphrase = await unlockVault();
-        if (!passphrase) return [];
-        try {
-            return await decryptLearners(vault, passphrase);
-        } catch (_err) {
-            return [];
-        }
-    }
-
-    async function setLearners(learners) {
-        await ensureVaultReady();
-        const passphrase = await unlockVault();
-        if (!passphrase) return false;
-        const vault = await encryptLearners(learners, passphrase);
-        localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
-        return true;
-    }
-
-    async function loadLearners(){
+    function loadLearners(){
         const ul = document.querySelector('.list-section .scroll-container ul');
         ul.innerHTML = '';
-        const learners = await getLearners();
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
         if (!learners.length) {
             const empty = document.createElement('li');
             empty.className = 'empty-state';
@@ -454,10 +293,9 @@ footer {
             ul.appendChild(li);
         });
     }
-    async function editLearner(i){
-        const learners = await getLearners();
+    function editLearner(i){
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
         const l = learners[i];
-        if (!l) return;
         const email = prompt('Email', l.email);
         if(email === null) return;
         const cleanEmail = normalizeEmail(email);
@@ -483,14 +321,14 @@ footer {
             return;
         }
         learners[i] = {email: cleanEmail, first: cleanFirst, last: cleanLast};
-        await setLearners(learners);
+        localStorage.setItem('learners', JSON.stringify(learners));
         loadLearners();
     }
-    async function deleteLearner(i){
+    function deleteLearner(i){
         if(!confirm('Remove this learner?')) return;
-        const learners = await getLearners();
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
         learners.splice(i,1);
-        await setLearners(learners);
+        localStorage.setItem('learners', JSON.stringify(learners));
         loadLearners();
     }
 
@@ -507,31 +345,19 @@ footer {
             alert('Please enter a valid email address.');
             return;
         }
-        (async () => {
-            const learners = await getLearners();
-            const duplicate = learners.some(function(entry){
-                return normalizeEmail(entry.email) === email;
-            });
-            if (duplicate) {
-                alert('That learner email already exists.');
-                return;
-            }
-            learners.push({email, first, last});
-            const saved = await setLearners(learners);
-            if (!saved) return;
-            loadLearners();
-            this.reset();
-        })();
+        const learners = JSON.parse(localStorage.getItem('learners')||'[]');
+        const duplicate = learners.some(function(entry){
+            return normalizeEmail(entry.email) === email;
+        });
+        if (duplicate) {
+            alert('That learner email already exists.');
+            return;
+        }
+        learners.push({email, first, last});
+        localStorage.setItem('learners', JSON.stringify(learners));
+        loadLearners();
+        this.reset();
     });
-
-    document.getElementById('clear-all-btn').addEventListener('click', function(){
-        (async () => {
-            if (!confirm('Clear all learners from this device?')) return;
-            await setLearners([]);
-            loadLearners();
-        })();
-    });
-
     loadLearners();
 })();
 
