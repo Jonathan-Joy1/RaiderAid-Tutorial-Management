@@ -1,4 +1,4 @@
-window.RAIDERAID_FIREBASE_CONFIG = Object.freeze({ /*Note: DO NOT COMMIT/PUSH this file*/
+window.RAIDERAID_FIREBASE_CONFIG = Object.freeze({
   apiKey: "AIzaSyCYBv_97L6WBglEarKByfC0tOWgYu3Yvq8",
   authDomain: "raideraid-374c7.firebaseapp.com",
   projectId: "raideraid-374c7",
