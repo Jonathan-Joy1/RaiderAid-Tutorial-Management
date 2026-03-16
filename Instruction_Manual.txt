@@ -1,30 +1,22 @@
 **--INSTRUCTION MANUAL--**
-As you are the user of RaiderAid Reminder, please look over the following sections to understand important details about the app.
+As you use RaiderAid Reminder, please view the following sections to understand important details about the app.
 
 --INSTALLATION--
-To access RaiderAid Reminder, you will need to scroll down to the bottom of the public repository page, then go to the live GitHub Pages URL. On the website, you should see
-an install app button on the right end of the address bar, which enables you to access the app.
+To access RaiderAid Reminder, you will need to scroll down to the bottom of the public repository page, then go to the live GitHub Pages URL. On the website, you should see an install app button on the right end of the address bar, which enables you to access the app.
 
 --SOFTWARE USE--
 * The home page provides basic information on the purpose of RaiderAid Reminder and gives a support email. 
 
-* Before you can access the Learner List and Sender pages, you must sign up or log in on the sign-up/login page using a valid Sunnyvale ISD email address ending with "@sunnyvaleisd.net" or 
-"@sunnyvaleisd.com." When you create an account, you should see a verification email sent to your Gmail account, which may either 
-be found in the inbox or spam mail. This email should be from Firebase, and it comes with a link that you will click to verify the email account, and then you can log 
-in to the app.
+* Before you can access the Learner List and Sender pages, you must sign up or log in on the sign-up/login page using a valid Sunnyvale ISD email address ending with "@sunnyvaleisd.net" or "@sunnyvaleisd.com." When you create an account, you should see a verification email sent to your Gmail account, which may either be found in the inbox or spam mail. This email should be from Firebase, and it comes with a link that you will click to verify the email account, and then you can log in to the app.
 
 * For the learner list page, you can add, edit, or remove students as a group based on their email account information, and the changes are saved when you log out.
 
-* For the sender page, you can select any number of students from the learner list and describe your RaiderAid activity to send a reminder email. When the students confirm or deny 
-their attendance from their emails, you should then receive a corresponding email showing their attendance status for your activity.
+* For the sender page, you can select any number of students from the learner list and describe your RaiderAid activity to send a reminder email. When the students confirm or deny their attendance from their emails, you should then receive a corresponding email showing their attendance status for your activity.
 
 * To log out, simply go to the Account page and then click the Log Out button.
 
 --UPDATES AND REPAIR--
-While updates are rare, those that occur are error fixes. If you notice any minor or significant errors, please send an email describing (and include a screenshot if possible)
-the error to the support email found on the homepage.
+While updates are rare, those that occur are error fixes. If you notice any minor or significant errors, please send an email (and include a screenshot if possible) describing the error to the support email found on the homepage.
 
 --LIMITATION--
-Although RaiderAid Reminder is intended to be a practical classroom management tool used often by SHS teachers, an unavoidable restriction of the software is that there is an
-email quota that refreshes every month. If you eventually notice an error that relates to EmailJS, understand that this is an expected error, and you would have to wait a few 
-days or weeks to be able to use the app again.
+Although RaiderAid Reminder is meant to be a practical classroom management tool used often by SHS teachers, an unavoidable current restriction of the software is that it has an email quota that refreshes every month, meaning it can only send a limited number of emails within a short time period. So, if you eventually notice an error relating to EmailJS, understand that this is expected, and you will have to wait a few days or weeks to use the app again.
